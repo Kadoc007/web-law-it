@@ -6,12 +6,14 @@ package-lock.json
 .env
 .env.local
 .env.*.local
+backend/.env
 serviceAccountKey.json
 backend/serviceAccountKey.json
 
-# Config files with API keys (keep config.example.js for reference)
-frontend/js/config.js
-!frontend/js/config.example.js
+# Config files with API keys (keep example files for reference)
+frontend/js/firebase-config.js
+!frontend/js/firebase-config.example.js
+!frontend/js/api-config.example.js
 
 # IDE
 .vscode/

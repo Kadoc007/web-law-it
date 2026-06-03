@@ -13,12 +13,8 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize Firestore
-const db = firebase.firestore();
-
 // Initialize Auth
 const auth = firebase.auth();
 
 // Export for use in other scripts (global variables)
-window.db = db;
 window.auth = auth;

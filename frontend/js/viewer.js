@@ -1,70 +1,72 @@
-// viewer.js - ดูกฎหมายตามหมวด (Firebase Direct Access)
+// viewer.js - ดูกฎหมายตามหมวดผ่าน Backend API
 
-// ดึง category จาก query string
 const params = new URLSearchParams(window.location.search);
 const category = params.get("category");
 
 if (!category) {
-  document.getElementById("law-list").innerHTML =
-    "<p>ไม่พบหมวดกฎหมาย</p>";
-  throw new Error("No category");
+  window.location.replace("home.html");
 }
 
-// เปลี่ยนชื่อหัวข้อ
 const titles = {
   computer: "กฎหมายคอมพิวเตอร์",
   privacy: "กฎหมายคุ้มครองข้อมูลส่วนบุคคล (PDPA)",
   copyright: "กฎหมายลิขสิทธิ์"
 };
 
-document.getElementById("law-title").innerText =
+document.getElementById("law-title").textContent =
   titles[category] || "กฎหมาย";
 
+function showLawMessage(container, message) {
+  const paragraph = document.createElement("p");
+  paragraph.textContent = message;
+  container.replaceChildren(paragraph);
+}
+
+function renderLawCard(law) {
+  const div = document.createElement("div");
+  div.className = "law-card";
+
+  const heading = document.createElement("h3");
+  heading.textContent = `${law.section || ""} : ${law.title || ""}`;
+
+  const description = document.createElement("p");
+  description.textContent = law.description || "";
+
+  div.append(heading, description);
+
+  if (law.penalty && law.penalty.trim() !== "") {
+    const penalty = document.createElement("div");
+    penalty.className = "penalty";
+    penalty.textContent = `โทษ: ${law.penalty}`;
+    div.append(penalty);
+  }
+
+  return div;
+}
+
 async function loadLaws() {
+  const container = document.getElementById("law-list");
+
   try {
-    // เรียก Firebase Firestore โดยตรง
-    const snapshot = await db
-      .collection("law")
-      .doc(category)
-      .collection("items")
-      .orderBy("section")
-      .get();
+    const laws = await window.apiClient.laws.list(category);
+    container.replaceChildren();
 
-    const laws = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    const container = document.getElementById("law-list");
-    container.innerHTML = "";
-
-    laws.forEach(law => {
-      const div = document.createElement("div");
-      div.className = "law-card";
-
-      let penaltyHTML = "";
-      if (law.penalty && law.penalty.trim() !== "") {
-        penaltyHTML = `<div class="penalty">โทษ: ${law.penalty}</div>`;
-      }
-
-      div.innerHTML = `
-        <h3>${law.section} : ${law.title}</h3>
-        <p>${law.description}</p>
-        ${penaltyHTML}
-      `;
-
-      container.appendChild(div);
+    laws.forEach((law) => {
+      container.appendChild(renderLawCard(law));
     });
 
     if (laws.length === 0) {
-      container.innerHTML = "<p>ไม่มีข้อมูลกฎหมายในหมวดนี้</p>";
+      showLawMessage(container, "ยังไม่มีข้อมูล laws จาก Backend ในหมวดนี้");
     }
-
   } catch (err) {
     console.error("Error loading laws:", err);
-    document.getElementById("law-list").innerHTML =
-      "<p>เกิดข้อผิดพลาดในการโหลดข้อมูล</p>";
+    showLawMessage(
+      container,
+      "ยังไม่สามารถเชื่อมต่อ Backend ได้ กรุณารัน backend ก่อน จึงจะดึง laws มาแสดงได้"
+    );
   }
 }
 
-loadLaws();
+if (category) {
+  loadLaws();
+}

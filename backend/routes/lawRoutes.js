@@ -1,6 +1,13 @@
 import express from "express";
 import { db } from "../firebaseAdmin.js";
 import { adminAuth } from "../middleware/adminAuth.js";
+import { handleRouteError } from "../utils/http.js";
+import {
+  sanitizeLawRecord,
+  validateCategory,
+  validateDocId,
+  validateLawInput,
+} from "../utils/validation.js";
 
 const router = express.Router();
 
@@ -10,7 +17,7 @@ const router = express.Router();
  */
 router.get("/:category", async (req, res) => {
   try {
-    const { category } = req.params;
+    const category = validateCategory(req.params.category);
 
     const snapshot = await db
       .collection("law")
@@ -19,14 +26,14 @@ router.get("/:category", async (req, res) => {
       .orderBy("section")
       .get();
 
-    const laws = snapshot.docs.map(doc => ({
+    const laws = snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...sanitizeLawRecord(doc.data()),
     }));
 
     res.json(laws);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    handleRouteError(res, err, "LawRoutes:list");
   }
 });
 
@@ -36,7 +43,8 @@ router.get("/:category", async (req, res) => {
  */
 router.get("/:category/:id", async (req, res) => {
   try {
-    const { category, id } = req.params;
+    const category = validateCategory(req.params.category);
+    const id = validateDocId(req.params.id);
 
     const docRef = db
       .collection("law")
@@ -52,10 +60,10 @@ router.get("/:category/:id", async (req, res) => {
 
     res.json({
       id: docSnap.id,
-      ...docSnap.data()
+      ...sanitizeLawRecord(docSnap.data()),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    handleRouteError(res, err, "LawRoutes:get");
   }
 });
 
@@ -65,29 +73,8 @@ router.get("/:category/:id", async (req, res) => {
  */
 router.post("/:category", adminAuth, async (req, res) => {
   try {
-    const { category } = req.params;
-    const { section, title, description, penalty } = req.body;
-
-    // ตรวจข้อมูลพื้นฐาน
-    if (!section || !title || !description) {
-      return res.status(400).json({ message: "ข้อมูลไม่ครบ" });
-    }
-
-    // หมวดอื่นที่ไม่ใช่ privacy ต้องมี penalty
-    if (category !== "privacy" && !penalty) {
-      return res.status(400).json({ message: "กรุณากรอกโทษ" });
-    }
-
-    const data = {
-      section,
-      title,
-      description
-    };
-
-    // เพิ่ม penalty เฉพาะหมวดที่มี
-    if (category !== "privacy") {
-      data.penalty = penalty;
-    }
+    const category = validateCategory(req.params.category);
+    const data = validateLawInput(category, req.body);
 
     await db
       .collection("law")
@@ -97,7 +84,7 @@ router.post("/:category", adminAuth, async (req, res) => {
 
     res.status(201).json({ message: "เพิ่มข้อมูลกฎหมายสำเร็จ" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    handleRouteError(res, err, "LawRoutes:create");
   }
 });
 
@@ -107,16 +94,9 @@ router.post("/:category", adminAuth, async (req, res) => {
  */
 router.put("/:category/:id", adminAuth, async (req, res) => {
   try {
-    const { category, id } = req.params;
-    const { section, title, description, penalty } = req.body;
-
-    if (!section || !title || !description) {
-      return res.status(400).json({ message: "ข้อมูลไม่ครบ" });
-    }
-
-    if (category !== "privacy" && !penalty) {
-      return res.status(400).json({ message: "กรุณากรอกโทษ" });
-    }
+    const category = validateCategory(req.params.category);
+    const id = validateDocId(req.params.id);
+    const data = validateLawInput(category, req.body);
 
     const docRef = db
       .collection("law")
@@ -130,21 +110,11 @@ router.put("/:category/:id", adminAuth, async (req, res) => {
       return res.status(404).json({ message: "ไม่พบข้อมูลกฎหมาย" });
     }
 
-    const data = {
-      section,
-      title,
-      description
-    };
-
-    if (category !== "privacy") {
-      data.penalty = penalty;
-    }
-
     await docRef.update(data);
 
     res.json({ message: "แก้ไขข้อมูลกฎหมายสำเร็จ" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    handleRouteError(res, err, "LawRoutes:update");
   }
 });
 
@@ -154,7 +124,8 @@ router.put("/:category/:id", adminAuth, async (req, res) => {
  */
 router.delete("/:category/:id", adminAuth, async (req, res) => {
   try {
-    const { category, id } = req.params;
+    const category = validateCategory(req.params.category);
+    const id = validateDocId(req.params.id);
 
     const docRef = db
       .collection("law")
@@ -172,7 +143,7 @@ router.delete("/:category/:id", adminAuth, async (req, res) => {
 
     res.json({ message: "ลบข้อมูลกฎหมายสำเร็จ" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    handleRouteError(res, err, "LawRoutes:delete");
   }
 });
 

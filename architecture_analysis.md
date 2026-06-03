@@ -1,0 +1,308 @@
+# Architecture Analysis - WEB-LAW Project
+
+วันที่วิเคราะห์: 2026-05-20
+
+## Executive Summary
+
+โปรเจคนี้เป็นเว็บกฎหมาย IT แบบ static frontend + Node/Express backend + Firebase/Firestore
+โดย frontend หลายหน้าดึงและเขียน Firestore โดยตรง ขณะที่ backend มี API และ admin middleware อยู่แล้วแต่ยังไม่ได้ถูกใช้เป็นเส้นทางหลักของหน้า admin
+
+สถานะโดยรวม: ยังไม่พร้อม deploy production เพราะมี security blocking หลายจุด โดยเฉพาะ service account key ที่อยู่ใน workspace, ความเสี่ยง XSS จาก `innerHTML`, และยังไม่พบ Firebase Security Rules ใน repo
+
+สถานะ migration ล่าสุด: เฟส 1-5 ย้าย frontend/admin ให้ผ่าน backend แล้ว, เพิ่ม backend hardening, เพิ่ม `firestore.rules`, และเพิ่ม regression tests แล้ว แต่ยังต้อง rotate/lบ service account key จริงก่อน production
+
+## Architecture Overview
+
+- `frontend/`: HTML/CSS/JS แบบ static pages, ใช้ Firebase compat SDK โดยตรง
+- `backend/`: Express 5 API, Firebase Admin SDK, Helmet, CORS, rate limit
+- Data store: Firestore collections `law/{category}/items` และ `cards`
+- Admin flow ปัจจุบัน: `frontend/js/admin.js` login ด้วย Firebase Auth แล้วเขียน Firestore โดยตรง
+- Backend admin flow ที่มีอยู่: `adminAuth` ตรวจ Firebase ID token/custom claims/`ADMIN_EMAILS`
+
+## Blocking Findings
+
+### S1 - Firebase service account key อยู่ใน workspace
+
+สถานะล่าสุด: ลบ `backend/serviceAccountKey.json` ออกจาก workspace แล้ว แต่ยังต้อง rotate/revoke key เดิม และล้าง git history ถ้าเคย commit
+
+เดิมไฟล์ `backend/serviceAccountKey.json` มี service account private key จริงอยู่ใน workspace แม้ `.gitignore` จะกัน `backend/serviceAccountKey.json` แล้วก็ตาม
+
+ผลกระทบ:
+- ถ้าเคย commit หรือหลุดออกนอกเครื่อง ต้องถือว่า key ถูก compromise แล้ว
+- ผู้ถือ key สามารถใช้สิทธิ์ Firebase Admin SDK ได้ตาม permission ของ service account
+
+หลักฐาน:
+- `backend/serviceAccountKey.json:2` ระบุชนิด `service_account`
+- `backend/serviceAccountKey.json:4` มี `private_key_id`
+- `backend/serviceAccountKey.json:5` มี private key จริง
+- `implementation_plan.md:10` และ `วิเคราะห์สถาปัตยกรรม.md:62` ก็ระบุความเสี่ยงนี้ไว้แล้ว
+
+คำแนะนำ:
+- Rotate/revoke service account key ทันทีใน Google Cloud Console
+- ลบไฟล์จริงออกจาก workspace และเก็บเฉพาะ `serviceAccountKey.example.json`
+- ตรวจและล้าง git history ถ้าไฟล์เคยถูก commit
+- ใช้ environment variables ตาม `backend/firebaseAdmin.js:9-31`
+
+### S1 - XSS จาก HTML ที่มาจาก Firestore
+
+หลายจุด render ข้อมูล Firestore ผ่าน `innerHTML` โดยตรง โดยเฉพาะ `pageContent` ที่ admin ใส่ HTML ได้
+
+หลักฐาน:
+- `frontend/js/card-detail.js:98-99` ใส่ `card.pageContent` เข้า DOM ด้วย `innerHTML`
+- `frontend/admin.html:119-122` ระบุว่า field นี้รองรับ HTML
+- `frontend/home.html:196-201` interpolate `card.title`, `card.subtitle`, `card.description`, `imageUrl` เข้า template HTML
+- `frontend/js/viewer.js:50` render `law.section`, `law.title`, `law.description`, `penalty` ผ่าน `div.innerHTML`
+- `frontend/js/admin.js:108` และ `frontend/js/admin.js:255` render admin list ด้วย `innerHTML +=`
+
+ผลกระทบ:
+- ผู้ที่เขียน Firestore ได้ หรือผู้โจมตีที่ได้สิทธิ์ admin สามารถฝัง script/event handler เพื่อขโมย token/session หรือ redirect ผู้ใช้
+- ถ้า Firestore Rules เปิดกว้าง ความเสี่ยงจะสูงมากขึ้น
+
+คำแนะนำ:
+- เปลี่ยนข้อมูลทั่วไปเป็น `textContent` และสร้าง DOM node ด้วย `createElement`
+- ถ้าจำเป็นต้องรองรับ HTML จริง ให้ sanitize ด้วย allowlist เช่น DOMPurify ก่อน render
+- จำกัด HTML tags/attributes ที่อนุญาตใน `pageContent`
+
+### S1 - ไม่พบ Firebase Security Rules ใน repo (Mitigated in Phase 5)
+
+สถานะล่าสุด: เพิ่ม `firestore.rules` และ `firebase.json` แล้ว โดย rules ปิด client read/write ทั้งหมด และให้ backend Admin SDK เป็น gateway เดียว
+
+หมายเหตุ: รายละเอียดด้านล่างเป็น finding จาก audit ก่อนเฟส 5 ซึ่งถูกแก้ด้วย rules แบบ deny-all แล้ว
+
+ไม่พบไฟล์ `firestore.rules` หรือ rules config ที่ใช้ deploy
+
+ผลกระทบ:
+- frontend อ่าน/เขียน Firestore โดยตรง จึงต้องพึ่ง rules เป็นด่านหลัก
+- backend มี `adminAuth` แต่ admin frontend ไม่ได้ใช้ backend API เป็นหลัก
+
+หลักฐาน:
+- `frontend/js/admin.js:167-182` เขียน collection `law` โดยตรง
+- `frontend/js/admin.js:309-319` เขียน collection `cards` โดยตรง
+- เดิม `frontend/js/firebase-config.example.js` expose `db` และ `auth` เป็น global; ตอนนี้เหลือเฉพาะ Firebase Auth แล้ว
+- ค้นหา `firestore.rules`, `rules_version`, `allow read`, `allow write` แล้วไม่พบ rules จริงใน repo
+
+คำแนะนำ:
+- เพิ่ม `firestore.rules` และ deploy rules พร้อมโปรเจค
+- Public read ควร allow เฉพาะ fields/path ที่ต้องใช้
+- Write ควร require authenticated user และ custom claim `admin == true`
+- พิจารณาให้ admin เขียนผ่าน backend API เท่านั้น แล้วปิด direct write จาก client
+
+### S2 - CORS เปิดทุก origin เมื่อไม่ได้ตั้งค่า env (Mitigated in Phase 4)
+
+สถานะล่าสุด: เฟส 4 เพิ่ม production guard แล้ว หาก `NODE_ENV=production` แต่ไม่ตั้ง `ALLOWED_ORIGINS` backend จะหยุดทันที
+
+ถ้า `ALLOWED_ORIGINS` ว่าง backend จะอนุญาตทุก origin
+
+หลักฐาน:
+- `backend/server.js:21-24` อ่าน `ALLOWED_ORIGINS`
+- `backend/server.js:32-37` ถ้าไม่ได้ตั้งค่า จะ `callback(null, true)`
+
+ผลกระทบ:
+- ใน production ที่ลืมตั้งค่า env จะเปิด API ให้ทุก origin เรียกได้
+
+คำแนะนำ:
+- ให้ production fail-fast ถ้า `ALLOWED_ORIGINS` ว่าง
+- แยก `NODE_ENV=development` สำหรับ fallback dev เท่านั้น
+
+## High Priority Findings
+
+### H1 - Backend ส่ง `err.message` กลับ client หลาย route (Mitigated in Phase 4)
+
+สถานะล่าสุด: routes ถูกปรับให้ใช้ `handleRouteError` แล้ว โดย unknown errors ส่ง generic message กลับ client และ log รายละเอียดไว้ฝั่ง server
+
+หลักฐาน:
+- `backend/routes/lawRoutes.js:29`, `58`, `100`, `147`, `175`
+- `backend/routes/cardRoutes.js:18`, `29`, `43`, `67`, `81`
+
+ผลกระทบ:
+- อาจ leak รายละเอียด Firestore/index/schema/internal error
+
+คำแนะนำ:
+- ใช้ generic error message ต่อ client
+- log รายละเอียดฝั่ง server เท่านั้น
+- ส่งต่อ error ให้ global error handler หรือสร้าง helper `handleRouteError`
+
+### H1 - Input validation ยังตื้นและไม่มี allowlist (Mitigated in Phase 4)
+
+สถานะล่าสุด: เพิ่ม validation กลางสำหรับ category, doc id, field length/type, URL, slug และ sanitize `pageContent`
+
+หลักฐาน:
+- `backend/routes/lawRoutes.js:68-78` validate แค่ required fields
+- `backend/routes/cardRoutes.js:36-39` validate แค่ `title`
+- `backend/routes/cardRoutes.js:50-62` รับ optional fields ทุกค่าโดยไม่จำกัด type/length/format
+
+ผลกระทบ:
+- เขียน category/doc path ที่ไม่คาดคิดได้
+- เก็บ HTML/URL/slug ที่เป็น payload อันตรายได้
+- ข้อมูลผิดรูปอาจทำให้ frontend แตกหรือเกิด XSS
+
+คำแนะนำ:
+- เพิ่ม schema validation เช่น Zod/Joi
+- allowlist category เป็น `computer`, `privacy`, `copyright`
+- validate `slug`, `imageUrl`, field length และ type ทุก field
+
+### H2 - HTML หลายหน้าไม่มี viewport meta
+
+หลักฐาน:
+- `frontend/home.html:1-11` ไม่มี `<meta name="viewport">`
+- `frontend/index.html:1-12` ไม่มี `<meta name="viewport">`
+- `frontend/admin.html:1-10` ไม่มี `<meta name="viewport">`
+- `frontend/consult.html:1-10` ไม่มี `<meta name="viewport">`
+- `frontend/card-detail.html:6` มี viewport แล้ว
+
+ผลกระทบ:
+- responsive CSS อาจไม่ทำงานถูกต้องบน mobile
+
+คำแนะนำ:
+- เพิ่ม `<meta name="viewport" content="width=device-width, initial-scale=1.0">` ทุก HTML page
+
+### H2 - Broken local links
+
+หลักฐาน:
+- `frontend/home.html:43` link ไป `article2.html`
+- `frontend/home.html:51` link ไป `article3.html`
+- `frontend/home.html:219` และ `frontend/home.html:227` fallback cards ก็อ้างไฟล์เดียวกัน
+- ไม่พบ `frontend/article2.html` และ `frontend/article3.html`
+
+คำแนะนำ:
+- สร้างไฟล์ปลายทางจริง หรือเปลี่ยนเป็น `card-detail.html?slug=...`
+
+### H2 - โครงสร้าง HTML มี stray closing tag
+
+หลักฐาน:
+- `frontend/index.html:25` มี `</section>` แต่ไม่มี opening `<section>` ที่ตรงกัน
+
+คำแนะนำ:
+- ลบ closing tag นี้หรือแก้โครงสร้างให้ถูกต้อง
+
+## Frontend Accessibility and UX Findings
+
+- `frontend/home.html:36`, `44`, `52` มี `<img>` ใน banner ที่ไม่มี `alt`
+- Link ที่ `target="_blank"` ขาด `rel="noopener noreferrer"` เช่น `frontend/index.html:27`, `frontend/home.html:100`, `frontend/consult.html:49`, `50`, `79`, `114`
+- Card navigation ใช้ `<div onclick>` หลายจุด เช่น `frontend/home.html:71`, `76`, `81` ทำให้ keyboard navigation/accessibility ไม่ดีเท่า `<a>` หรือ `<button>`
+- Navbar hamburger เป็น clickable div/button pattern ที่ควรตรวจ ARIA เพิ่มเติมใน `frontend/components/navbar.html`
+
+## Performance Findings
+
+- ยังไม่พบ `loading="lazy"` ในรูปภาพ static/dynamic
+- มี inline scripts หลายจุดใน HTML ทำให้ caching/reuse ยากและต้องเปิด CSP `'unsafe-inline'`
+- `innerHTML +=` ใน loop มี O(n^2) และ reparse DOM เช่น `frontend/home.html:196`, `frontend/js/admin.js:108`, `frontend/js/admin.js:255`
+- Firebase compat SDK ถูกโหลดในหลายหน้าและเป็น blocking script; ควรพิจารณา `defer` หรือย้าย logic เป็น module
+- `backend/node_modules` มีอยู่ใน workspace แต่ `.gitignore` กันไว้แล้ว ต้องตรวจว่าไม่ได้ถูก track ใน git
+
+## Code Quality Findings
+
+- มี duplication ของ navbar loader script ใน `admin.html`, `card-detail.html`, `consult.html`, `home.html`, `index.html`
+- มี duplication ของ LINE floating button script ในหลายหน้า
+- Logic ดึง cards ซ้ำระหว่าง `frontend/home.html`, `frontend/js/card-detail.js`, `frontend/js/admin.js`
+- เพิ่ม backend validation tests แล้วในเฟส 5; ยังควรเพิ่ม API/e2e tests เพิ่มเติม
+- `git status` ยังตรวจไม่ได้เพราะ repository ถูกมองเป็น dubious ownership ระหว่าง user `MSI/USER` กับ `MSI/CodexSandboxOffline`
+
+## Existing Strengths
+
+- `.gitignore` ครอบคลุม `.env`, service account key และ frontend config จริง
+- Backend ใช้ `helmet`, `express-rate-limit`, body size limit และ CORS allowlist mechanism
+- `adminAuth` รองรับ Firebase custom claims และ fallback `ADMIN_EMAILS`
+- Backend แยก routes และ middleware ชัดเจน
+- มี example config files ช่วย onboarding
+- CSS มี media queries หลายจุด เช่น navbar, line button, main, consult, card detail, admin
+
+## Recommended Remediation Order
+
+1. Rotate Firebase service account key และยืนยันว่า `backend/serviceAccountKey.json` ไม่มีใน workspace/history
+2. เพิ่มและ deploy Firebase Security Rules โดยล็อก write เฉพาะ admin claim
+3. แก้ XSS: sanitize/เลิกใช้ `innerHTML` กับข้อมูลจาก Firestore
+4. บังคับ `ALLOWED_ORIGINS` ใน production และปิด fallback allow-all
+5. เปลี่ยน admin frontend ให้เรียก backend API หรืออย่างน้อยให้ Firestore Rules enforce admin claim
+6. เพิ่ม backend schema validation และ generic route errors
+7. แก้ viewport meta, broken links, stray tag, image alt, `rel=noopener`
+8. เพิ่ม smoke tests/API tests และ lint/format checks
+
+## Deployment Readiness
+
+ยังไม่ควร deploy production จนกว่า S1 ทั้งหมดจะถูกแก้และยืนยันแล้ว:
+- key ถูก rotate แล้ว
+- ไม่มี secret ใน repo/history
+- Firestore Rules ถูกเพิ่มและทดสอบ
+- XSS paths ถูก sanitize หรือเปลี่ยนเป็น safe DOM rendering
+
+## Backend Gateway Migration - Phase 1
+
+เริ่มเฟส 1 แล้ว:
+
+- เพิ่ม `API_CONTRACT.md` เพื่อกำหนด backend endpoints ที่ frontend ต้องย้ายไปใช้
+- เพิ่ม `frontend/js/api.js` เป็น client helper กลางสำหรับเรียก backend
+- เพิ่ม `frontend/js/api-config.js` และ `frontend/js/api-config.example.js` ให้มี `window.API_CONFIG.baseUrl`
+- เพิ่ม backend endpoint `GET /api/cards/slug/:slug` เพื่อรองรับ flow เดิมของ `card-detail.html?slug=...`
+
+ยังไม่ได้ย้ายหน้า public/admin ออกจาก direct Firestore ในเฟสนี้ เพื่อให้เปลี่ยนแบบคุมความเสี่ยงทีละหน้าในเฟส 2 และ 3
+
+## Backend Gateway Migration - Phase 2
+
+ย้าย public reads ให้ผ่าน backend แล้ว:
+
+- `frontend/index.html` โหลด `js/api-config.js` + `js/api.js` แทน Firebase Firestore SDK
+- `frontend/js/viewer.js` เปลี่ยนจาก `db.collection("law")...` เป็น `window.apiClient.laws.list(category)`
+- `frontend/card-detail.html` โหลด backend API client แทน Firebase Firestore SDK
+- `frontend/js/card-detail.js` เปลี่ยนการดึง card ด้วย id/slug เป็น backend API
+- `frontend/home.html` โหลด `js/api-config.js` + `js/api.js` และเปลี่ยน dynamic cards จาก direct Firestore เป็น `window.apiClient.cards.list()`
+
+ยังเหลือ direct Firestore ใน `frontend/admin.html` และ `frontend/js/admin.js` สำหรับเฟส 3
+
+## Backend Gateway Migration - Phase 3
+
+ย้าย admin read/write ให้ผ่าน backend แล้ว:
+
+- `frontend/admin.html` โหลด Firebase Auth เท่านั้นสำหรับ login และโหลด `js/api-config.js` + `js/api.js` สำหรับ backend calls
+- `frontend/js/admin.js` เปลี่ยน law list/create/update/delete เป็น `window.apiClient.laws.*`
+- `frontend/js/admin.js` เปลี่ยน card list/get/create/update/delete เป็น `window.apiClient.cards.*`
+- ทุก admin write ส่ง Firebase ID token ใน `Authorization: Bearer <token>` ผ่าน API helper
+- `frontend/js/firebase-config.js` และ example เหลือเฉพาะ Firebase Auth initialization
+
+หลังเฟสนี้ frontend ไม่ควรมี direct Firestore SDK usage เหลือใน runtime pages
+
+## Backend Hardening - Phase 4
+
+เริ่ม hardening ฝั่ง backend แล้ว:
+
+- เพิ่ม `backend/utils/http.js` สำหรับ `HttpError` และ generic route error responses
+- เพิ่ม `backend/utils/validation.js` สำหรับ category allowlist, doc id validation, field length/type validation, URL/slug validation, response sanitization และ HTML sanitizer แบบ allowlist
+- `backend/routes/lawRoutes.js` ใช้ validation กลาง และเลิกส่ง `err.message` กลับ client
+- `backend/routes/cardRoutes.js` ใช้ validation/sanitizer กลางสำหรับ cards, `pageContent` และ response ของข้อมูลเก่าใน Firestore
+- `backend/server.js` เพิ่ม production guard: ถ้า `NODE_ENV=production` แต่ไม่มี `ALLOWED_ORIGINS` server จะหยุดทันที
+- `backend/.env.example` เพิ่ม `NODE_ENV=development`
+
+ข้อควรพิจารณาต่อ: sanitizer ปัจจุบันเป็น allowlist ในโค้ดเองเพราะยังไม่ได้เพิ่ม dependency ภายนอก หาก production ต้องรองรับ HTML ซับซ้อน ควรเปลี่ยนเป็นไลบรารีเฉพาะทาง เช่น `sanitize-html` หรือ DOMPurify ฝั่ง server
+
+## Firestore Rules and Regression - Phase 5
+
+เพิ่ม deployment guardrails แล้ว:
+
+- เพิ่ม `firestore.rules` เพื่อปิด client read/write ทั้งหมด
+- เพิ่ม `firebase.json` สำหรับ deploy Firestore rules
+- เพิ่ม `backend/tests/validation.test.js` ครอบ validation, slug/id checks, URL validation, sanitizer และ legacy response sanitization
+- เปลี่ยน `backend/package.json` script `test` เป็น `node --test tests/*.test.js`
+- เพิ่ม `DEPLOYMENT_CHECKLIST.md` สำหรับ production rollout
+
+ข้อควรระวัง: rules แบบ deny-all เหมาะกับสถาปัตยกรรมใหม่ที่ frontend ต้องผ่าน backend เท่านั้น ถ้ามีหน้าเก่าหรือเครื่องมือภายนอกที่ยังอ่าน Firestore โดยตรง จะต้องย้ายมาก่อน deploy rules นี้
+
+## Cleanup and Readiness Pass
+
+ทำความสะอาดไฟล์และ readiness เพิ่มเติมแล้ว:
+
+- ลบ `backend/serviceAccountKey.json` ออกจาก workspace
+- ลบไฟล์ frontend ที่ไม่ถูกโหลดแล้ว: `frontend/js/home.js`, `frontend/js/navbar.js`, `frontend/js/config.js`, `frontend/js/config.example.js`
+- เพิ่ม `frontend/js/api-config.example.js` เพื่อแทน config template ชื่อเก่า
+- อัปเดต `Readme.md`, `.gitignore`, และ `DEPLOYMENT_CHECKLIST.md` ให้ตรงกับ backend gateway architecture
+- เพิ่ม viewport meta ให้ HTML หลักทุกหน้า
+- แก้ลิงก์ `article2.html` และ `article3.html` ที่ไม่มีไฟล์ปลายทาง ให้ไปยัง category pages แทน
+- เพิ่ม `alt` ให้ banner images ที่ขาด
+- เพิ่ม `rel="noopener noreferrer"` ให้ external links ที่เปิดแท็บใหม่
+- ลบ stray closing `</section>` ใน `frontend/index.html`
+
+ผลตรวจล่าสุด:
+
+- `npm.cmd test` ผ่าน 8 tests
+- `node --check` ผ่านสำหรับ frontend/backend JS ที่เกี่ยวข้อง
+- ไม่พบ direct Firestore client usage ใน `frontend/`
+- ไม่พบ reference ไปไฟล์ frontend ที่ลบแล้ว

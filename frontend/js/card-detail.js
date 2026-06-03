@@ -1,123 +1,314 @@
-// card-detail.js - แสดงรายละเอียดการ์ด (Firebase Direct Access)
+// card-detail.js - แสดงรายละเอียดการ์ดผ่าน Backend API
 
-// Category labels mapping
 const categoryLabels = {
-    help: "ศูนย์ช่วยเหลือ",
-    article: "บทความ",
-    resource: "แหล่งข้อมูล"
+  help: "ศูนย์ช่วยเหลือ",
+  article: "บทความ",
+  resource: "แหล่งข้อมูล"
 };
 
-// ดึง parameter จาก URL
+const fallbackHeroImage = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=900";
+const safeContentTags = new Set([
+  "a",
+  "b",
+  "blockquote",
+  "br",
+  "code",
+  "div",
+  "em",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "i",
+  "img",
+  "li",
+  "ol",
+  "p",
+  "pre",
+  "span",
+  "strong",
+  "table",
+  "tbody",
+  "td",
+  "th",
+  "thead",
+  "tr",
+  "ul"
+]);
+const blockedContentTags = new Set([
+  "script",
+  "style",
+  "iframe",
+  "object",
+  "embed",
+  "form",
+  "input",
+  "button",
+  "textarea",
+  "select",
+  "template",
+  "svg",
+  "math"
+]);
+const safeClassNames = new Set(["org", "time", "address", "travel"]);
+
 function getUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-        id: params.get("id"),
-        slug: params.get("slug")
-    };
+  const params = new URLSearchParams(window.location.search);
+  return {
+    id: params.get("id"),
+    slug: params.get("slug")
+  };
 }
 
-// โหลดข้อมูลการ์ด
+function setImageWithFallback(img, src, alt, fallbackSrc) {
+  img.alt = alt || "";
+  img.src = getSafeImageUrl(src, fallbackSrc);
+  img.addEventListener("error", () => {
+    if (img.src !== fallbackSrc) {
+      img.src = fallbackSrc;
+    }
+  }, { once: true });
+}
+
+function getSafeImageUrl(src, fallbackSrc) {
+  if (!src) return fallbackSrc;
+
+  try {
+    const url = new URL(src, window.location.href);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.href;
+    }
+  } catch (err) {
+    console.warn("Invalid image URL:", err);
+  }
+
+  return fallbackSrc;
+}
+
+function getSafeLinkUrl(href) {
+  if (!href) return "";
+
+  try {
+    const url = new URL(href, window.location.href);
+    if (
+      url.protocol === "http:" ||
+      url.protocol === "https:" ||
+      url.protocol === "mailto:" ||
+      url.protocol === "tel:"
+    ) {
+      return url.href;
+    }
+  } catch (err) {
+    console.warn("Invalid link URL:", err);
+  }
+
+  return "";
+}
+
+function hasHtmlMarkup(text) {
+  return /<\/?[a-z][\s\S]*>/i.test(text);
+}
+
+function renderPlainTextContent(container, content) {
+  const text = (content || "").trim();
+
+  if (!text) {
+    const empty = document.createElement("p");
+    empty.style.color = "#888";
+    empty.style.textAlign = "center";
+    empty.textContent = "ไม่มีเนื้อหาเพิ่มเติม";
+    container.appendChild(empty);
+    return;
+  }
+
+  text
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .forEach((block) => {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = block;
+      container.appendChild(paragraph);
+    });
+}
+
+function copySafeClassName(source, target) {
+  const safeClasses = Array.from(source.classList || [])
+    .filter((className) => safeClassNames.has(className));
+
+  if (safeClasses.length > 0) {
+    target.className = safeClasses.join(" ");
+  }
+}
+
+function sanitizeContentNode(node) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return document.createTextNode(node.textContent || "");
+  }
+
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    return document.createDocumentFragment();
+  }
+
+  const tagName = node.tagName.toLowerCase();
+  const fragment = document.createDocumentFragment();
+
+  if (blockedContentTags.has(tagName)) {
+    return fragment;
+  }
+
+  if (!safeContentTags.has(tagName)) {
+    node.childNodes.forEach((child) => {
+      fragment.appendChild(sanitizeContentNode(child));
+    });
+    return fragment;
+  }
+
+  const element = document.createElement(tagName);
+  copySafeClassName(node, element);
+
+  if (tagName === "a") {
+    const safeHref = getSafeLinkUrl(node.getAttribute("href"));
+    if (safeHref) {
+      element.href = safeHref;
+      element.target = "_blank";
+      element.rel = "noopener noreferrer";
+    }
+  }
+
+  if (tagName === "img") {
+    const safeSrc = getSafeImageUrl(node.getAttribute("src"), "");
+    if (!safeSrc) {
+      return fragment;
+    }
+
+    element.src = safeSrc;
+    element.alt = node.getAttribute("alt") || "";
+    element.loading = "lazy";
+  }
+
+  node.childNodes.forEach((child) => {
+    element.appendChild(sanitizeContentNode(child));
+  });
+
+  return element;
+}
+
+function renderSafeRichContent(container, content) {
+  container.replaceChildren();
+
+  const text = (content || "").trim();
+  if (!hasHtmlMarkup(text)) {
+    renderPlainTextContent(container, text);
+    return;
+  }
+
+  const parsed = new DOMParser().parseFromString(text, "text/html");
+  const fragment = document.createDocumentFragment();
+
+  parsed.body.childNodes.forEach((node) => {
+    fragment.appendChild(sanitizeContentNode(node));
+  });
+
+  if (!fragment.hasChildNodes()) {
+    renderPlainTextContent(container, "");
+    return;
+  }
+
+  container.appendChild(fragment);
+}
+
 async function loadCardDetail() {
-    const { id, slug } = getUrlParams();
+  const { id, slug } = getUrlParams();
 
-    if (!id && !slug) {
-        showError("ไม่พบข้อมูลการ์ด");
-        return;
-    }
+  if (!id && !slug) {
+    showError("ไม่พบข้อมูลการ์ด");
+    return;
+  }
 
-    try {
-        let card = null;
+  try {
+    const card = id
+      ? await window.apiClient.cards.get(id)
+      : await window.apiClient.cards.getBySlug(slug);
 
-        if (id) {
-            // ดึงการ์ดตาม ID
-            const doc = await db.collection("cards").doc(id).get();
-            if (!doc.exists) throw new Error("Not found");
-            card = { id: doc.id, ...doc.data() };
-        } else if (slug) {
-            // ดึงการ์ดตาม slug
-            const snapshot = await db.collection("cards").where("slug", "==", slug).get();
-            if (snapshot.empty) throw new Error("Not found");
-            const doc = snapshot.docs[0];
-            card = { id: doc.id, ...doc.data() };
-        }
-
-        displayCard(card);
-
-    } catch (err) {
-        console.error("Error loading card:", err);
-        showError("ไม่พบข้อมูลการ์ด หรือเกิดข้อผิดพลาด");
-    }
+    displayCard(card);
+  } catch (err) {
+    console.error("Error loading card:", err);
+    showError("ไม่พบข้อมูลการ์ด หรือเกิดข้อผิดพลาด");
+  }
 }
 
-// แสดงข้อมูลการ์ด
 function displayCard(card) {
-    document.title = card.title + " - คลังกฎหมาย IT";
+  document.title = `${card.title || "รายละเอียด"} - คลังข้อมูลกฎหมาย IT`;
 
-    // Hero section
-    const heroImage = document.getElementById("card-image");
-    if (heroImage) {
-        heroImage.src = card.imageUrl || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=900";
-        heroImage.alt = card.title;
+  const heroImage = document.getElementById("card-image");
+  if (heroImage) {
+    setImageWithFallback(heroImage, card.imageUrl, card.title, fallbackHeroImage);
+  }
+
+  const titleEl = document.getElementById("card-title");
+  if (titleEl) titleEl.textContent = card.title || "ไม่มีหัวข้อ";
+
+  const subtitleEl = document.getElementById("card-subtitle");
+  if (subtitleEl) {
+    if (card.subtitle) {
+      subtitleEl.textContent = card.subtitle;
+      subtitleEl.style.display = "block";
+    } else {
+      subtitleEl.style.display = "none";
     }
+  }
 
-    const titleEl = document.getElementById("card-title");
-    if (titleEl) titleEl.textContent = card.title;
-
-    const subtitleEl = document.getElementById("card-subtitle");
-    if (subtitleEl) {
-        if (card.subtitle) {
-            subtitleEl.textContent = card.subtitle;
-            subtitleEl.style.display = "block";
-        } else {
-            subtitleEl.style.display = "none";
-        }
+  const categoryBadge = document.getElementById("card-category-badge");
+  if (categoryBadge) {
+    if (card.category && categoryLabels[card.category]) {
+      categoryBadge.textContent = categoryLabels[card.category];
+      categoryBadge.style.display = "inline-block";
+    } else {
+      categoryBadge.style.display = "none";
     }
+  }
 
-    const categoryBadge = document.getElementById("card-category-badge");
-    if (categoryBadge) {
-        if (card.category && categoryLabels[card.category]) {
-            categoryBadge.textContent = categoryLabels[card.category];
-        } else {
-            categoryBadge.style.display = "none";
-        }
+  const descEl = document.getElementById("card-description");
+  if (descEl) {
+    if (card.description) {
+      descEl.textContent = card.description;
+      descEl.style.display = "block";
+    } else {
+      descEl.style.display = "none";
     }
+  }
 
-    // Description
-    const descEl = document.getElementById("card-description");
-    if (descEl) {
-        if (card.description) {
-            descEl.textContent = card.description;
-        } else {
-            descEl.style.display = "none";
-        }
-    }
-
-    // Page Content (HTML)
-    const contentEl = document.getElementById("card-content");
-    if (contentEl) {
-        if (card.pageContent) {
-            contentEl.innerHTML = card.pageContent;
-        } else {
-            contentEl.innerHTML = "<p style='color:#888;text-align:center;'>ไม่มีเนื้อหาเพิ่มเติม</p>";
-        }
-    }
+  const contentEl = document.getElementById("card-content");
+  if (contentEl) {
+    renderSafeRichContent(contentEl, card.pageContent);
+  }
 }
 
-// แสดง error
 function showError(message) {
-    const hero = document.getElementById("card-hero");
-    if (hero) hero.style.display = "none";
+  const hero = document.getElementById("card-hero");
+  if (hero) hero.style.display = "none";
 
-    const body = document.querySelector(".card-body");
-    if (body) {
-        body.innerHTML = `
-      <div class="error-message">
-        <h2>😕 ไม่พบข้อมูล</h2>
-        <p>${message}</p>
-        <a href="home.html" class="back-btn" style="margin-top:20px;">← กลับหน้าแรก</a>
-      </div>
-    `;
-    }
+  const body = document.querySelector(".card-body");
+  if (!body) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "error-message";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "ไม่พบข้อมูล";
+
+  const text = document.createElement("p");
+  text.textContent = message;
+
+  const link = document.createElement("a");
+  link.href = "home.html";
+  link.className = "back-btn";
+  link.style.marginTop = "20px";
+  link.textContent = "กลับหน้าแรก";
+
+  wrapper.append(heading, text, link);
+  body.replaceChildren(wrapper);
 }
 
 document.addEventListener("DOMContentLoaded", loadCardDetail);

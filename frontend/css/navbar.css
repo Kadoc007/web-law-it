@@ -1,5 +1,54 @@
 :root {
   --nav-height: 64px;
+  --color-slate-deep: #0f172a;
+  --color-slate-dark: #1e293b;
+  --color-slate-muted: #374151;
+  --color-slate-soft: #64748b;
+  --color-slate-light: #94a3b8;
+  --color-cloud-pale: #e2e8f0;
+  --color-cloud-wash: #f1f5f9;
+  --color-cloud-white: #f8fafc;
+  --color-periwinkle: #667eea;
+  --color-periwinkle-deep: #5a6fd6;
+  --color-sky: #38bdf8;
+  --color-danger: #dc2626;
+  --color-danger-wash: #fef2f2;
+  --color-line: #06c755;
+  --shadow-rest: 0 4px 10px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.18);
+  --shadow-deep: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --font-thai: "TH Sarabun New", "Segoe UI", system-ui, sans-serif;
+  --font-label: "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: var(--color-slate-muted);
+  font-family: var(--font-thai);
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+a {
+  color: var(--color-periwinkle);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
 }
 
 /* ===== Navbar ===== */
@@ -9,7 +58,7 @@
   left: 0;
   width: 100%;
   height: var(--nav-height);
-  background: #1e293b;
+  background: var(--color-slate-dark);
   z-index: 1000;
 }
 
@@ -29,7 +78,7 @@
 .logo {
   font-size: 20px;
   font-weight: bold;
-  color: #38bdf8;
+  color: var(--color-sky);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -46,13 +95,15 @@
 }
 
 .nav-links a {
-  color: white;
+  color: var(--color-cloud-white);
   text-decoration: none;
   font-size: 16px;
+  font-family: var(--font-label);
+  transition: color 0.2s ease;
 }
 
 .nav-links a:hover {
-  color: #38bdf8;
+  color: var(--color-sky);
 }
 
 /* ===== Mobile ===== */

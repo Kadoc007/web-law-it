@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Frontend must access Firestore through the Express backend.
+    // Firebase Admin SDK bypasses these client rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

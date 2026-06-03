@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 
 <head>
   <meta charset="UTF-8">
-  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
 
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/admin.css">
@@ -55,6 +56,7 @@
             <option value="computer">กฎหมายคอมพิวเตอร์</option>
             <option value="privacy">กฎหมายคุ้มครองข้อมูลส่วนบุคคล</option>
             <option value="copyright">กฎหมายลิขสิทธิ์</option>
+            <option value="copyright">กฎหมายธุรกรรมดิจิทัล</option>
           </select>
 
           <input id="section" placeholder="มาตรา">
@@ -116,10 +118,10 @@
           </div>
 
           <div class="form-group">
-            <label>เนื้อหาหน้า (HTML)</label>
-            <textarea id="card-pageContent" placeholder="เนื้อหาที่จะแสดงเมื่อคลิกการ์ด (รองรับ HTML)"
+            <label>เนื้อหาหน้า</label>
+            <textarea id="card-pageContent" placeholder="เนื้อหาที่จะแสดงเมื่อคลิกการ์ด"
               rows="8"></textarea>
-            <p class="hint">ใส่ HTML ได้เลย เช่น &lt;h2&gt;หัวข้อ&lt;/h2&gt;&lt;p&gt;รายละเอียด&lt;/p&gt;</p>
+            <p class="hint">ระบบจะแสดงเป็นข้อความปลอดภัย ไม่ประมวลผล HTML</p>
           </div>
 
           <div class="form-actions">
@@ -150,10 +152,10 @@
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="js/firebase-config.js"></script>
-  <script src="js/config.js"></script>
+  <script src="js/api-config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/admin.js"></script>
 
 </body>

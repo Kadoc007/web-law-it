@@ -1,32 +1,83 @@
-// admin.js - Admin Panel (Firebase Direct Access)
+// admin.js - Admin Panel ผ่าน Backend API
 
 let token = "";
 let editId = null;
 let editCardId = null;
 
-/* ================= LOGIN ================= */
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+const adminImageFallback = "https://via.placeholder.com/80x60?text=No+Image";
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function clearElement(element) {
+  element.replaceChildren();
+}
+
+function createMessage(message) {
+  const paragraph = document.createElement("p");
+  paragraph.style.textAlign = "center";
+  paragraph.style.color = "#888";
+  paragraph.textContent = message;
+  return paragraph;
+}
+
+function setImageWithFallback(img, src, alt, fallbackSrc = adminImageFallback) {
+  img.alt = alt || "";
+  img.src = getSafeImageUrl(src, fallbackSrc);
+  img.addEventListener("error", () => {
+    if (img.src !== fallbackSrc) {
+      img.src = fallbackSrc;
+    }
+  }, { once: true });
+}
+
+function getSafeImageUrl(src, fallbackSrc = adminImageFallback) {
+  if (!src) return fallbackSrc;
 
   try {
-    // ใช้ Firebase Auth SDK โดยตรง
+    const url = new URL(src, window.location.href);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.href;
+    }
+  } catch (err) {
+    console.warn("Invalid image URL:", err);
+  }
+
+  return fallbackSrc;
+}
+
+async function getAdminToken() {
+  const user = auth.currentUser;
+  if (!user) {
+    token = "";
+    return "";
+  }
+
+  token = await user.getIdToken();
+  return token;
+}
+
+async function login() {
+  const email = byId("email").value;
+  const password = byId("password").value;
+
+  try {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
     token = await userCredential.user.getIdToken();
 
-    document.getElementById("login-box").style.display = "none";
-    document.getElementById("admin-panel").style.display = "block";
+    byId("login-box").style.display = "none";
+    byId("admin-panel").style.display = "block";
 
     togglePenalty();
     loadAdminLaws();
     loadAdminCards();
   } catch (err) {
     console.error("Login error:", err);
-    alert("Login ไม่สำเร็จ: " + err.message);
+    alert(`Login ไม่สำเร็จ: ${err.message}`);
   }
 }
 
-/* ================= LOGOUT ================= */
 function logout() {
   if (!confirm("ต้องการออกจากระบบหรือไม่?")) return;
 
@@ -35,32 +86,27 @@ function logout() {
   editId = null;
   editCardId = null;
 
-  document.getElementById("admin-panel").style.display = "none";
-  document.getElementById("login-box").style.display = "block";
-  document.getElementById("admin-laws").innerHTML = "";
-  document.getElementById("admin-cards").innerHTML = "";
+  byId("admin-panel").style.display = "none";
+  byId("login-box").style.display = "block";
+  clearElement(byId("admin-laws"));
+  clearElement(byId("admin-cards"));
 
   resetForm();
   resetCardForm();
 }
 
-/* ================= TABS ================= */
 function showTab(tabName) {
-  // อัพเดท buttons
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.classList.remove("active");
-    if (btn.textContent.toLowerCase().includes(tabName === "laws" ? "กฎหมาย" : "การ์ด")) {
-      btn.classList.add("active");
-    }
+  const buttons = document.querySelectorAll(".tab-btn");
+  buttons.forEach((btn, index) => {
+    const isActive = (tabName === "laws" && index === 0) || (tabName === "cards" && index === 1);
+    btn.classList.toggle("active", isActive);
   });
 
-  // อัพเดท contents
-  document.querySelectorAll(".tab-content").forEach(content => {
+  document.querySelectorAll(".tab-content").forEach((content) => {
     content.classList.remove("active");
   });
-  document.getElementById(`tab-${tabName}`).classList.add("active");
+  byId(`tab-${tabName}`).classList.add("active");
 
-  // โหลดข้อมูลตาม tab
   if (tabName === "laws") {
     loadAdminLaws();
   } else if (tabName === "cards") {
@@ -68,10 +114,9 @@ function showTab(tabName) {
   }
 }
 
-/* ================= TOGGLE PENALTY ================= */
 function togglePenalty() {
-  const category = document.getElementById("category").value;
-  const penaltyInput = document.getElementById("penalty");
+  const category = byId("category").value;
+  const penaltyInput = byId("penalty");
 
   if (category === "privacy") {
     penaltyInput.style.display = "none";
@@ -81,198 +126,137 @@ function togglePenalty() {
   }
 }
 
-/* ================= LOAD LAWS ================= */
+function renderLawItem(law) {
+  const item = document.createElement("div");
+  item.className = "law-item";
+
+  const text = document.createElement("div");
+  text.className = "law-text";
+
+  const section = document.createElement("b");
+  section.textContent = law.section || "";
+  text.append(section, document.createTextNode(` - ${law.title || ""}`));
+
+  const actions = document.createElement("div");
+  actions.className = "action-buttons";
+
+  const editButton = document.createElement("button");
+  editButton.className = "edit-btn";
+  editButton.type = "button";
+  editButton.textContent = "แก้ไข";
+  editButton.addEventListener("click", () => editLaw(law));
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "danger";
+  deleteButton.type = "button";
+  deleteButton.textContent = "ลบ";
+  deleteButton.addEventListener("click", () => deleteLaw(law.id));
+
+  actions.append(editButton, deleteButton);
+  item.append(text, actions);
+  return item;
+}
+
 async function loadAdminLaws() {
-  const category = document.getElementById("category").value;
+  const category = byId("category").value;
+  const container = byId("admin-laws");
 
   togglePenalty();
 
   try {
-    // เรียก Firebase Firestore โดยตรง
-    const snapshot = await db
-      .collection("law")
-      .doc(category)
-      .collection("items")
-      .orderBy("section")
-      .get();
-
-    const laws = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    const div = document.getElementById("admin-laws");
-    div.innerHTML = "";
-
-    laws.forEach(law => {
-      div.innerHTML += `
-      <div class="law-item">
-
-        <div class="law-text">
-          <b>${law.section}</b> - ${law.title}
-        </div>
-
-        <div class="action-buttons">
-          <button class="edit-btn" onclick="editLaw(
-            '${law.id}',
-            '${escapeForOnClick(law.section)}',
-            '${escapeForOnClick(law.title)}',
-            '${escapeForOnClick(law.description)}',
-            '${escapeForOnClick(law.penalty || "")}'
-          )">✏️</button>
-
-          <button class="danger" onclick="deleteLaw('${law.id}')">🗑</button>
-        </div>
-
-      </div>
-    `;
-    });
+    const laws = await window.apiClient.laws.list(category);
+    clearElement(container);
 
     if (laws.length === 0) {
-      div.innerHTML = "<p style='text-align:center; color:#888;'>ยังไม่มีข้อมูลกฎหมาย</p>";
+      container.appendChild(createMessage("ยังไม่มีข้อมูลกฎหมาย"));
+      return;
     }
+
+    laws.forEach((law) => {
+      container.appendChild(renderLawItem(law));
+    });
   } catch (err) {
     console.error("Error loading laws:", err);
+    clearElement(container);
+    container.appendChild(createMessage("โหลดข้อมูลกฎหมายไม่สำเร็จ กรุณาตรวจสอบ backend"));
   }
 }
 
-// Helper function to escape strings for onclick
-function escapeForOnClick(str) {
-  if (!str) return "";
-  return str
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'")
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, "\\n")
-    .replace(/\r/g, "\\r");
-}
-
-/* ================= ADD / EDIT LAW ================= */
 async function saveLaw() {
   if (!token) {
     alert("กรุณา Login ก่อน");
     return;
   }
 
-  const category = document.getElementById("category").value;
-
+  const category = byId("category").value;
   const data = {
-    section: section.value,
-    title: title.value,
-    description: description.value
+    section: byId("section").value,
+    title: byId("title").value,
+    description: byId("description").value
   };
 
-  // ส่ง penalty เฉพาะหมวดที่มีโทษ
   if (category !== "privacy") {
-    data.penalty = penalty.value;
+    data.penalty = byId("penalty").value;
   }
 
   try {
-    const collectionRef = db.collection("law").doc(category).collection("items");
+    const adminToken = await getAdminToken();
 
     if (editId) {
-      // แก้ไข
-      await collectionRef.doc(editId).update(data);
-      alert("แก้ไขข้อมูลสำเร็จ!");
+      await window.apiClient.laws.update(category, editId, data, adminToken);
+      alert("แก้ไขข้อมูลสำเร็จ");
     } else {
-      // เพิ่มใหม่
-      await collectionRef.add(data);
-      alert("เพิ่มข้อมูลสำเร็จ!");
+      await window.apiClient.laws.create(category, data, adminToken);
+      alert("เพิ่มข้อมูลสำเร็จ");
     }
 
     resetForm();
     loadAdminLaws();
   } catch (err) {
     console.error("Error saving law:", err);
-    alert("เกิดข้อผิดพลาด: " + err.message);
+    alert(`เกิดข้อผิดพลาด: ${err.message}`);
   }
 }
 
-/* ================= EDIT LAW ================= */
-function editLaw(id, sec, titleVal, desc, pen) {
-  editId = id;
-  section.value = sec;
-  title.value = titleVal;
-  description.value = desc;
-  penalty.value = pen || "";
-  saveBtn.innerText = "บันทึกการแก้ไข";
+function editLaw(law) {
+  editId = law.id;
+  byId("section").value = law.section || "";
+  byId("title").value = law.title || "";
+  byId("description").value = law.description || "";
+  byId("penalty").value = law.penalty || "";
+  byId("saveBtn").innerText = "บันทึกการแก้ไข";
 
   togglePenalty();
 }
 
-/* ================= DELETE LAW ================= */
 async function deleteLaw(id) {
   if (!token) return;
   if (!confirm("ยืนยันการลบ?")) return;
 
-  const category = document.getElementById("category").value;
+  const category = byId("category").value;
 
   try {
-    await db.collection("law").doc(category).collection("items").doc(id).delete();
-    alert("ลบข้อมูลสำเร็จ!");
+    const adminToken = await getAdminToken();
+    await window.apiClient.laws.delete(category, id, adminToken);
+    alert("ลบข้อมูลสำเร็จ");
     loadAdminLaws();
   } catch (err) {
     console.error("Error deleting law:", err);
-    alert("เกิดข้อผิดพลาด: " + err.message);
+    alert(`เกิดข้อผิดพลาด: ${err.message}`);
   }
 }
 
-/* ================= RESET LAW FORM ================= */
 function resetForm() {
   editId = null;
-  section.value = "";
-  title.value = "";
-  description.value = "";
-  penalty.value = "";
-  saveBtn.innerText = "เพิ่มข้อมูล";
+  byId("section").value = "";
+  byId("title").value = "";
+  byId("description").value = "";
+  byId("penalty").value = "";
+  byId("saveBtn").innerText = "เพิ่มข้อมูล";
 
   togglePenalty();
 }
 
-/* ===================================================================== */
-/*                           CARD MANAGEMENT                              */
-/* ===================================================================== */
-
-/* ================= LOAD CARDS ================= */
-async function loadAdminCards() {
-  try {
-    // เรียก Firebase Firestore โดยตรง
-    const snapshot = await db.collection("cards").orderBy("createdAt", "desc").get();
-    const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    const container = document.getElementById("admin-cards");
-    container.innerHTML = "";
-
-    if (cards.length === 0) {
-      container.innerHTML = `<p style="text-align:center; color:#888;">ยังไม่มีการ์ด</p>`;
-      return;
-    }
-
-    cards.forEach(card => {
-      const imgSrc = card.imageUrl || "https://via.placeholder.com/80x60?text=No+Image";
-      const categoryBadge = card.category ? `<span class="card-item-category">${getCategoryLabel(card.category)}</span>` : "";
-
-      container.innerHTML += `
-        <div class="card-item">
-          <img class="card-item-image" src="${imgSrc}" alt="${card.title}" onerror="this.src='https://via.placeholder.com/80x60?text=No+Image'">
-          <div class="card-item-info">
-            <div class="card-item-title">${card.title}</div>
-            <div class="card-item-subtitle">${card.subtitle || card.description || "-"}</div>
-            ${categoryBadge}
-          </div>
-          <div class="action-buttons">
-            <button class="edit-btn" onclick="editCard('${card.id}')">✏️</button>
-            <button class="danger" onclick="deleteCard('${card.id}')">🗑</button>
-          </div>
-        </div>
-      `;
-    });
-  } catch (err) {
-    console.error("Error loading cards:", err);
-  }
-}
-
-/* ================= HELPER: Category Label ================= */
 function getCategoryLabel(category) {
   const labels = {
     help: "ศูนย์ช่วยเหลือ",
@@ -282,14 +266,83 @@ function getCategoryLabel(category) {
   return labels[category] || category;
 }
 
-/* ================= SAVE CARD ================= */
+function renderCardItem(card) {
+  const item = document.createElement("div");
+  item.className = "card-item";
+
+  const img = document.createElement("img");
+  img.className = "card-item-image";
+  setImageWithFallback(img, card.imageUrl, card.title);
+
+  const info = document.createElement("div");
+  info.className = "card-item-info";
+
+  const title = document.createElement("div");
+  title.className = "card-item-title";
+  title.textContent = card.title || "ไม่มีหัวข้อ";
+
+  const subtitle = document.createElement("div");
+  subtitle.className = "card-item-subtitle";
+  subtitle.textContent = card.subtitle || card.description || "-";
+
+  info.append(title, subtitle);
+
+  if (card.category) {
+    const badge = document.createElement("span");
+    badge.className = "card-item-category";
+    badge.textContent = getCategoryLabel(card.category);
+    info.appendChild(badge);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "action-buttons";
+
+  const editButton = document.createElement("button");
+  editButton.className = "edit-btn";
+  editButton.type = "button";
+  editButton.textContent = "แก้ไข";
+  editButton.addEventListener("click", () => editCard(card.id));
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "danger";
+  deleteButton.type = "button";
+  deleteButton.textContent = "ลบ";
+  deleteButton.addEventListener("click", () => deleteCard(card.id));
+
+  actions.append(editButton, deleteButton);
+  item.append(img, info, actions);
+  return item;
+}
+
+async function loadAdminCards() {
+  const container = byId("admin-cards");
+
+  try {
+    const cards = await window.apiClient.cards.list();
+    clearElement(container);
+
+    if (cards.length === 0) {
+      container.appendChild(createMessage("ยังไม่มีการ์ด"));
+      return;
+    }
+
+    cards.forEach((card) => {
+      container.appendChild(renderCardItem(card));
+    });
+  } catch (err) {
+    console.error("Error loading cards:", err);
+    clearElement(container);
+    container.appendChild(createMessage("โหลดการ์ดไม่สำเร็จ กรุณาตรวจสอบ backend"));
+  }
+}
+
 async function saveCard() {
   if (!token) {
     alert("กรุณา Login ก่อน");
     return;
   }
 
-  const titleVal = document.getElementById("card-title").value.trim();
+  const titleVal = byId("card-title").value.trim();
   if (!titleVal) {
     alert("กรุณากรอกหัวข้อ");
     return;
@@ -297,111 +350,107 @@ async function saveCard() {
 
   const data = {
     title: titleVal,
-    subtitle: document.getElementById("card-subtitle").value.trim(),
-    description: document.getElementById("card-description").value.trim(),
-    imageUrl: document.getElementById("card-imageUrl").value.trim(),
-    slug: document.getElementById("card-slug").value.trim(),
-    category: document.getElementById("card-category").value,
-    pageContent: document.getElementById("card-pageContent").value,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    subtitle: byId("card-subtitle").value.trim(),
+    description: byId("card-description").value.trim(),
+    imageUrl: byId("card-imageUrl").value.trim(),
+    slug: byId("card-slug").value.trim(),
+    category: byId("card-category").value,
+    pageContent: byId("card-pageContent").value
   };
 
   try {
+    const adminToken = await getAdminToken();
+
     if (editCardId) {
-      // แก้ไข
-      await db.collection("cards").doc(editCardId).update(data);
-      alert("แก้ไขการ์ดสำเร็จ!");
+      await window.apiClient.cards.update(editCardId, data, adminToken);
+      alert("แก้ไขการ์ดสำเร็จ");
     } else {
-      // เพิ่มใหม่
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      await db.collection("cards").add(data);
-      alert("เพิ่มการ์ดสำเร็จ!");
+      await window.apiClient.cards.create(data, adminToken);
+      alert("เพิ่มการ์ดสำเร็จ");
     }
 
     resetCardForm();
     loadAdminCards();
   } catch (err) {
     console.error("Error saving card:", err);
-    alert("เกิดข้อผิดพลาด: " + err.message);
+    alert(`เกิดข้อผิดพลาด: ${err.message}`);
   }
 }
 
-/* ================= EDIT CARD ================= */
 async function editCard(id) {
   try {
-    const doc = await db.collection("cards").doc(id).get();
-    if (!doc.exists) throw new Error("ไม่พบการ์ด");
-
-    const card = doc.data();
+    const card = await window.apiClient.cards.get(id);
 
     editCardId = id;
-    document.getElementById("card-title").value = card.title || "";
-    document.getElementById("card-subtitle").value = card.subtitle || "";
-    document.getElementById("card-description").value = card.description || "";
-    document.getElementById("card-imageUrl").value = card.imageUrl || "";
-    document.getElementById("card-slug").value = card.slug || "";
-    document.getElementById("card-category").value = card.category || "";
-    document.getElementById("card-pageContent").value = card.pageContent || "";
+    byId("card-title").value = card.title || "";
+    byId("card-subtitle").value = card.subtitle || "";
+    byId("card-description").value = card.description || "";
+    byId("card-imageUrl").value = card.imageUrl || "";
+    byId("card-slug").value = card.slug || "";
+    byId("card-category").value = card.category || "";
+    byId("card-pageContent").value = card.pageContent || "";
 
-    document.getElementById("saveCardBtn").innerText = "💾 บันทึกการแก้ไข";
-    document.getElementById("cancelCardBtn").style.display = "inline-block";
+    byId("saveCardBtn").innerText = "บันทึกการแก้ไข";
+    byId("cancelCardBtn").style.display = "inline-block";
 
-    // แสดง preview
     previewImage();
-
-    // เลื่อนขึ้นไปที่ form
-    document.getElementById("tab-cards").scrollIntoView({ behavior: "smooth" });
+    byId("tab-cards").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
-    alert("เกิดข้อผิดพลาด: " + err.message);
+    alert(`เกิดข้อผิดพลาด: ${err.message}`);
   }
 }
 
-/* ================= DELETE CARD ================= */
 async function deleteCard(id) {
   if (!token) return;
   if (!confirm("ยืนยันการลบการ์ดนี้?")) return;
 
   try {
-    await db.collection("cards").doc(id).delete();
-    alert("ลบการ์ดสำเร็จ!");
+    const adminToken = await getAdminToken();
+    await window.apiClient.cards.delete(id, adminToken);
+    alert("ลบการ์ดสำเร็จ");
     loadAdminCards();
   } catch (err) {
     console.error("Error deleting card:", err);
-    alert("เกิดข้อผิดพลาด: " + err.message);
+    alert(`เกิดข้อผิดพลาด: ${err.message}`);
   }
 }
 
-/* ================= RESET CARD FORM ================= */
 function resetCardForm() {
   editCardId = null;
-  document.getElementById("card-title").value = "";
-  document.getElementById("card-subtitle").value = "";
-  document.getElementById("card-description").value = "";
-  document.getElementById("card-imageUrl").value = "";
-  document.getElementById("card-slug").value = "";
-  document.getElementById("card-category").value = "";
-  document.getElementById("card-pageContent").value = "";
+  byId("card-title").value = "";
+  byId("card-subtitle").value = "";
+  byId("card-description").value = "";
+  byId("card-imageUrl").value = "";
+  byId("card-slug").value = "";
+  byId("card-category").value = "";
+  byId("card-pageContent").value = "";
 
-  document.getElementById("saveCardBtn").innerText = "➕ เพิ่มการ์ด";
-  document.getElementById("cancelCardBtn").style.display = "none";
-  document.getElementById("image-preview").innerHTML = "";
+  byId("saveCardBtn").innerText = "เพิ่มการ์ด";
+  byId("cancelCardBtn").style.display = "none";
+  clearElement(byId("image-preview"));
 }
 
-/* ================= IMAGE PREVIEW ================= */
 function previewImage() {
-  const url = document.getElementById("card-imageUrl").value.trim();
-  const preview = document.getElementById("image-preview");
+  const url = byId("card-imageUrl").value.trim();
+  const preview = byId("image-preview");
+  clearElement(preview);
 
-  if (url) {
-    preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.style.display='none'">`;
-  } else {
-    preview.innerHTML = "";
-  }
+  if (!url) return;
+
+  const safeUrl = getSafeImageUrl(url, "");
+  if (!safeUrl) return;
+
+  const img = document.createElement("img");
+  img.alt = "Preview";
+  img.src = safeUrl;
+  img.addEventListener("error", () => {
+    img.style.display = "none";
+  }, { once: true });
+  preview.appendChild(img);
 }
 
-// เพิ่ม event listener สำหรับ preview รูปภาพ
 document.addEventListener("DOMContentLoaded", () => {
-  const imageInput = document.getElementById("card-imageUrl");
+  const imageInput = byId("card-imageUrl");
   if (imageInput) {
     imageInput.addEventListener("blur", previewImage);
   }

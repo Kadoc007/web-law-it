@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation — IT LAW CENTER</title>
+  <meta name="description" content="API Documentation สำหรับ IT LAW CENTER Backend — TestSprite Reference">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ===== CSS Variables / Design Tokens ===== */
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #161e2e;
+      --bg-code: #0d1117;
+      --bg-code-inline: #1e293b;
+      --border: #1e293b;
+      --border-accent: #334155;
+
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --text-code: #e2e8f0;
+
+      --accent-blue: #3b82f6;
+      --accent-blue-dim: #1d4ed8;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-emerald: #34d399;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-rose: #f43f5e;
+      --accent-purple: #8b5cf6;
+      --accent-violet: #a78bfa;
+
+      --method-get: #10b981;
+      --method-get-bg: rgba(16, 185, 129, 0.08);
+      --method-get-border: rgba(16, 185, 129, 0.25);
+      --method-post: #3b82f6;
+      --method-post-bg: rgba(59, 130, 246, 0.08);
+      --method-post-border: rgba(59, 130, 246, 0.25);
+      --method-put: #f59e0b;
+      --method-put-bg: rgba(245, 158, 11, 0.08);
+      --method-put-border: rgba(245, 158, 11, 0.25);
+      --method-delete: #ef4444;
+      --method-delete-bg: rgba(239, 68, 68, 0.08);
+      --method-delete-border: rgba(239, 68, 68, 0.25);
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+      --shadow-glow-blue: 0 0 30px rgba(59,130,246,0.12);
+      --shadow-glow-cyan: 0 0 30px rgba(6,182,212,0.10);
+    }
+
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ===== Layout ===== */
+    .docs-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 28px 0;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .sidebar-brand .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-radius: 99px;
+      background: linear-gradient(135deg, var(--accent-blue-dim), var(--accent-purple));
+      color: white;
+    }
+
+    .sidebar-brand .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.6; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    .sidebar-section {
+      padding: 12px 24px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border-left: 2px solid transparent;
+    }
+
+    .sidebar-link:hover {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.03);
+      border-left-color: var(--accent-blue);
+    }
+
+    .sidebar-link .method-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      min-width: 38px;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+
+    .method-badge.get { background: var(--method-get-bg); color: var(--method-get); border: 1px solid var(--method-get-border); }
+    .method-badge.post { background: var(--method-post-bg); color: var(--method-post); border: 1px solid var(--method-post-border); }
+    .method-badge.put { background: var(--method-put-bg); color: var(--method-put); border: 1px solid var(--method-put-border); }
+    .method-badge.delete { background: var(--method-delete-bg); color: var(--method-delete); border: 1px solid var(--method-delete-border); }
+
+    /* ===== Main Content ===== */
+    .main-content {
+      padding: 48px 56px 80px;
+      max-width: 960px;
+    }
+
+    /* ===== Hero Section ===== */
+    .hero {
+      margin-bottom: 56px;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f1f5f9, #93c5fd, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      line-height: 1.8;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .meta-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      transition: border-color 0.2s ease;
+    }
+
+    .meta-card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .meta-card .label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .meta-card .value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    /* ===== Section Headers ===== */
+    .section-header {
+      margin-top: 56px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .section-header p {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ===== Endpoint Block ===== */
+    .endpoint {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 28px;
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .endpoint:hover {
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .endpoint-header:hover {
+      background: rgba(255,255,255,0.015);
+    }
+
+    .endpoint-method {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.04em;
+      min-width: 56px;
+      text-align: center;
+    }
+
+    .endpoint-method.get { background: var(--method-get-bg); color: var(--method-get); border: 1px solid var(--method-get-border); }
+    .endpoint-method.post { background: var(--method-post-bg); color: var(--method-post); border: 1px solid var(--method-post-border); }
+    .endpoint-method.put { background: var(--method-put-bg); color: var(--method-put); border: 1px solid var(--method-put-border); }
+    .endpoint-method.delete { background: var(--method-delete-bg); color: var(--method-delete); border: 1px solid var(--method-delete-border); }
+
+    .endpoint-path {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .endpoint-path .param {
+      color: var(--accent-amber);
+    }
+
+    .auth-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+
+    .auth-badge.public {
+      background: rgba(16,185,129,0.1);
+      color: var(--accent-green);
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+
+    .auth-badge.admin {
+      background: rgba(239,68,68,0.1);
+      color: var(--accent-rose);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .endpoint-body {
+      padding: 24px;
+    }
+
+    .endpoint-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.7;
+    }
+
+    /* ===== Sub-sections ===== */
+    .sub-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      margin-top: 20px;
+    }
+
+    .sub-title:first-child {
+      margin-top: 0;
+    }
+
+    /* ===== Params Table ===== */
+    .params-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .params-table th {
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .params-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(30,41,59,0.5);
+      vertical-align: top;
+    }
+
+    .params-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .params-table .param-name {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--accent-cyan);
+    }
+
+    .params-table .param-type {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent-purple);
+    }
+
+    .params-table .param-req {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .param-req.required {
+      background: rgba(239,68,68,0.1);
+      color: var(--accent-red);
+    }
+
+    .param-req.optional {
+      background: rgba(100,116,139,0.15);
+      color: var(--text-muted);
+    }
+
+    .param-req.conditional {
+      background: rgba(245,158,11,0.1);
+      color: var(--accent-amber);
+    }
+
+    .params-table .param-desc {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    /* ===== Code Blocks ===== */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-block-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .code-block-copy {
+      background: none;
+      border: 1px solid var(--border-accent);
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .code-block-copy:hover {
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .code-block pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-code);
+      tab-size: 2;
+    }
+
+    code {
+      font-family: var(--font-mono);
+    }
+
+    code.inline {
+      background: var(--bg-code-inline);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: var(--accent-cyan);
+    }
+
+    /* ===== Status Codes ===== */
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .status-code {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    .status-code.s2xx { background: rgba(16,185,129,0.12); color: var(--accent-green); }
+    .status-code.s4xx { background: rgba(245,158,11,0.12); color: var(--accent-amber); }
+    .status-code.s5xx { background: rgba(239,68,68,0.12); color: var(--accent-red); }
+
+    .status-desc {
+      color: var(--text-secondary);
+    }
+
+    /* ===== Info Box ===== */
+    .info-box {
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      margin: 20px 0;
+      font-size: 13px;
+      line-height: 1.7;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .info-box .icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .info-box.info {
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.15);
+      color: #93c5fd;
+    }
+
+    .info-box.warning {
+      background: rgba(245,158,11,0.06);
+      border: 1px solid rgba(245,158,11,0.15);
+      color: #fcd34d;
+    }
+
+    .info-box.danger {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.15);
+      color: #fca5a5;
+    }
+
+    .info-box.success {
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.15);
+      color: #6ee7b7;
+    }
+
+    /* ===== Allowed Values Tag List ===== */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-code-inline);
+      color: var(--accent-violet);
+      border: 1px solid var(--border);
+    }
+
+    /* ===== Divider ===== */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 56px 0;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .docs-layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: fixed;
+        left: -300px;
+        width: 280px;
+        transition: left 0.25s ease;
+        box-shadow: var(--shadow-lg);
+      }
+      .sidebar.open {
+        left: 0;
+      }
+      .main-content {
+        padding: 32px 20px 60px;
+      }
+      .hero h1 {
+        font-size: 28px;
+      }
+      .mobile-toggle {
+        display: flex;
+      }
+    }
+
+    @media (min-width: 901px) {
+      .mobile-toggle, .sidebar-overlay {
+        display: none !important;
+      }
+    }
+
+    .mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 200;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
+    }
+
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    /* ===== JSON Syntax Colors ===== */
+    .json-key { color: #7dd3fc; }
+    .json-str { color: #86efac; }
+    .json-num { color: #fbbf24; }
+    .json-bool { color: #c084fc; }
+    .json-null { color: #94a3b8; }
+    .json-comment { color: #4b5563; font-style: italic; }
+
+    /* ===== Validation Rules List ===== */
+    .rules-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .rules-list li {
+      position: relative;
+      padding: 6px 0 6px 22px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .rules-list li::before {
+      content: '›';
+      position: absolute;
+      left: 4px;
+      color: var(--accent-blue);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mobile menu toggle -->
+  <button class="mobile-toggle" id="mobileToggle" aria-label="เปิดเมนู">☰</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="docs-layout">
+
+    <!-- ===== Sidebar ===== -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <h1>IT LAW CENTER</h1>
+        <span class="badge">API v1.0</span>
+      </div>
+
+      <div class="sidebar-section">Overview</div>
+      <a href="#introduction" class="sidebar-link">🏠 Introduction</a>
+      <a href="#authentication" class="sidebar-link">🔐 Authentication</a>
+      <a href="#errors" class="sidebar-link">⚠️ Error Handling</a>
+      <a href="#rate-limiting" class="sidebar-link">🛡️ Rate Limiting</a>
+      <a href="#validation" class="sidebar-link">✅ Validation Rules</a>
+
+      <div class="sidebar-section">Cards</div>
+      <a href="#get-cards" class="sidebar-link">
+        <span class="method-badge get">GET</span>
+        /api/cards
+      </a>
+      <a href="#get-card-slug" class="sidebar-link">
+        <span class="method-badge get">GET</span>
+        /slug/:slug
+      </a>
+      <a href="#get-card-id" class="sidebar-link">
+        <span class="method-badge get">GET</span>
+        /cards/:id
+      </a>
+      <a href="#post-card" class="sidebar-link">
+        <span class="method-badge post">POST</span>
+        /api/cards
+      </a>
+      <a href="#put-card" class="sidebar-link">
+        <span class="method-badge put">PUT</span>
+        /cards/:id
+      </a>
+      <a href="#delete-card" class="sidebar-link">
+        <span class="method-badge delete">DEL</span>
+        /cards/:id
+      </a>
+
+      <div class="sidebar-section">Laws</div>
+      <a href="#get-laws" class="sidebar-link">
+        <span class="method-badge get">GET</span>
+        /laws/:category
+      </a>
+      <a href="#get-law-id" class="sidebar-link">
+        <span class="method-badge get">GET</span>
+        /laws/:cat/:id
+      </a>
+      <a href="#post-law" class="sidebar-link">
+        <span class="method-badge post">POST</span>
+        /laws/:category
+      </a>
+      <a href="#put-law" class="sidebar-link">
+        <span class="method-badge put">PUT</span>
+        /laws/:cat/:id
+      </a>
+      <a href="#delete-law" class="sidebar-link">
+        <span class="method-badge delete">DEL</span>
+        /laws/:cat/:id
+      </a>
+
+      <div class="sidebar-section">Reference</div>
+      <a href="#data-schemas" class="sidebar-link">📦 Data Schemas</a>
+      <a href="#security" class="sidebar-link">🔒 Security</a>
+    </nav>
+
+    <!-- ===== Main Content ===== -->
+    <main class="main-content">
+
+      <!-- Hero -->
+      <section class="hero" id="introduction">
+        <h1>API Documentation</h1>
+        <p>
+          เอกสาร API อ้างอิงสำหรับ IT LAW CENTER Backend — ระบบจัดการข้อมูลกฎหมาย IT ของประเทศไทย
+          ออกแบบสำหรับ TestSprite automated test generation
+        </p>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="label">Base URL</div>
+            <div class="value">http://localhost:3000</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Framework</div>
+            <div class="value">Express 5</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Database</div>
+            <div class="value">Firestore</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Auth</div>
+            <div class="value">Firebase Auth</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Body Limit</div>
+            <div class="value">10kb</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Content-Type</div>
+            <div class="value">application/json</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Authentication -->
+      <section id="authentication">
+        <div class="section-header">
+          <h2>🔐 Authentication</h2>
+          <p>Public GET endpoints ไม่ต้องใช้ token — Admin write endpoints ต้องมี Firebase ID Token</p>
+        </div>
+
+        <div class="info-box info">
+          <span class="icon">ℹ️</span>
+          <div>
+            <strong>Admin verification</strong> ตรวจสอบสิทธิ์ 2 วิธีตามลำดับ:<br>
+            1. Firebase Custom Claims — ถ้า token มี claim <code class="inline">admin: true</code><br>
+            2. Environment Variable — ถ้าอีเมลอยู่ใน <code class="inline">ADMIN_EMAILS</code> (.env)
+          </div>
+        </div>
+
+        <div class="sub-title">Header Format</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-label">HTTP Header</span>
+          </div>
+          <pre>Authorization: Bearer &lt;firebase-id-token&gt;</pre>
+        </div>
+
+        <div class="sub-title">Auth Error Responses</div>
+        <div class="status-list">
+          <div class="status-item">
+            <span class="status-code s4xx">401</span>
+            <span class="status-desc">ไม่พบ token หรือ token ไม่ถูกต้อง — <code class="inline">"ไม่พบ token การยืนยันตัวตน"</code></span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s4xx">403</span>
+            <span class="status-desc">Token ถูกต้องแต่ไม่มีสิทธิ์แอดมิน — <code class="inline">"ไม่มีสิทธิ์แอดมิน"</code></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Error Handling -->
+      <section id="errors">
+        <div class="section-header">
+          <h2>⚠️ Error Handling</h2>
+          <p>ทุก error response มีรูปแบบ JSON เดียวกัน — ข้อมูลภายในไม่รั่วไหลออกสู่ client</p>
+        </div>
+
+        <div class="sub-title">Error Response Format</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-label">JSON</span>
+          </div>
+          <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"คำอธิบายข้อผิดพลาด (ภาษาไทย)"</span>
+}</pre>
+        </div>
+
+        <div class="sub-title">HTTP Status Codes</div>
+        <div class="status-list">
+          <div class="status-item">
+            <span class="status-code s2xx">200</span>
+            <span class="status-desc">สำเร็จ — ดึง/แก้ไข/ลบข้อมูลเรียบร้อย</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s2xx">201</span>
+            <span class="status-desc">สร้างข้อมูลใหม่สำเร็จ</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s4xx">400</span>
+            <span class="status-desc">ข้อมูลไม่ถูกต้อง — validation error (category, id, slug, หรือ body)</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s4xx">401</span>
+            <span class="status-desc">ไม่มี token หรือ token ไม่ถูกต้อง</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s4xx">403</span>
+            <span class="status-desc">ไม่มีสิทธิ์แอดมิน</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s4xx">404</span>
+            <span class="status-desc">ไม่พบข้อมูลที่ร้องขอ</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s4xx">429</span>
+            <span class="status-desc">คำขอมากเกินไป (rate limit exceeded)</span>
+          </div>
+          <div class="status-item">
+            <span class="status-code s5xx">500</span>
+            <span class="status-desc">เกิดข้อผิดพลาดภายในระบบ (generic message, ไม่เปิดเผยรายละเอียด)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rate Limiting -->
+      <section id="rate-limiting">
+        <div class="section-header">
+          <h2>🛡️ Rate Limiting</h2>
+          <p>จำกัดจำนวน requests ต่อ IP เพื่อป้องกัน abuse</p>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="label">Window</div>
+            <div class="value">15 นาที</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Max Requests</div>
+            <div class="value">100 / IP</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Headers</div>
+            <div class="value">Standard (RateLimit-*)</div>
+          </div>
+        </div>
+
+        <div class="info-box warning">
+          <span class="icon">⚠️</span>
+          <div>
+            เมื่อเกิน rate limit จะได้ response <code class="inline">429</code> พร้อมข้อความ
+            <code class="inline">"คำขอมากเกินไป กรุณาลองใหม่ภายหลัง"</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- Validation Rules -->
+      <section id="validation">
+        <div class="section-header">
+          <h2>✅ Validation Rules</h2>
+          <p>กฎการตรวจสอบข้อมูลที่ backend ใช้ก่อนเขียนลง Firestore</p>
+        </div>
+
+        <div class="sub-title">Document ID</div>
+        <ul class="rules-list">
+          <li>Pattern: <code class="inline">/^[a-zA-Z0-9_-]+$/</code></li>
+          <li>ความยาวสูงสุด: 128 ตัวอักษร</li>
+          <li>ต้องไม่เป็นค่าว่าง</li>
+        </ul>
+
+        <div class="sub-title">Law Categories</div>
+        <div class="tag-list">
+          <span class="tag">computer</span>
+          <span class="tag">privacy</span>
+          <span class="tag">copyright</span>
+        </div>
+
+        <div class="sub-title">Card Categories</div>
+        <div class="tag-list">
+          <span class="tag">"" (empty)</span>
+          <span class="tag">help</span>
+          <span class="tag">article</span>
+          <span class="tag">resource</span>
+        </div>
+
+        <div class="sub-title">Slug</div>
+        <ul class="rules-list">
+          <li>Pattern: <code class="inline">/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/</code></li>
+          <li>ถูก normalize เป็น lowercase อัตโนมัติ</li>
+          <li>ความยาวสูงสุด: 100 ตัวอักษร</li>
+        </ul>
+
+        <div class="sub-title">URL Fields (imageUrl)</div>
+        <ul class="rules-list">
+          <li>ต้องเป็น valid URL</li>
+          <li>อนุญาตเฉพาะ protocol <code class="inline">http:</code> และ <code class="inline">https:</code></li>
+          <li>ความยาวสูงสุด: 2,048 ตัวอักษร</li>
+        </ul>
+
+        <div class="sub-title">HTML Content (pageContent)</div>
+        <ul class="rules-list">
+          <li>ความยาวสูงสุด: 20,000 ตัวอักษร</li>
+          <li>Allowed tags: <code class="inline">p, br, strong, b, em, i, u, ul, ol, li, h2, h3, h4, blockquote, a, img</code></li>
+          <li>Tags อื่นๆ เช่น <code class="inline">script, style, iframe</code> จะถูกลบออก</li>
+          <li>Event attributes เช่น <code class="inline">onclick, onerror</code> จะถูกลบ</li>
+          <li>Link (<code class="inline">a href</code>) อนุญาตเฉพาะ <code class="inline">http:, https:, mailto:, tel:</code></li>
+          <li><code class="inline">javascript:</code> URLs ถูก reject</li>
+          <li>Attribute <code class="inline">class</code> ถูก sanitize ให้เหลือเฉพาะ <code class="inline">/^[a-zA-Z0-9_-]{1,50}$/</code> สูงสุด 8 classes</li>
+        </ul>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ===================== CARDS ENDPOINTS ===================== -->
+      <section>
+        <div class="section-header" id="cards-section">
+          <h2>📇 Cards</h2>
+          <p>จัดการ Cards — เนื้อหาบทความ ข้อมูลศูนย์ช่วยเหลือ และทรัพยากรต่างๆ</p>
+        </div>
+
+        <!-- GET /api/cards -->
+        <div class="endpoint" id="get-cards">
+          <div class="endpoint-header">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/api/cards</span>
+            <span class="auth-badge public">Public</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ดึง cards ทั้งหมด เรียงตาม <code class="inline">createdAt</code> จากใหม่ไปเก่า
+              สามารถ filter ตาม category ผ่าน query parameter ได้
+            </p>
+
+            <div class="sub-title">Query Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">กรอง cards ตาม category — ค่าที่อนุญาต: <code class="inline">help</code>, <code class="inline">article</code>, <code class="inline">resource</code>, <code class="inline">""</code></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON Array</span>
+                <button class="code-block-copy" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre>[
+  {
+    <span class="json-key">"id"</span>: <span class="json-str">"consult-card"</span>,
+    <span class="json-key">"title"</span>: <span class="json-str">"ศูนย์รับปรึกษากฎหมาย"</span>,
+    <span class="json-key">"subtitle"</span>: <span class="json-str">"แหล่งรวมหน่วยงานให้คำปรึกษา"</span>,
+    <span class="json-key">"description"</span>: <span class="json-str">"ข้อมูลติดต่อหน่วยงาน..."</span>,
+    <span class="json-key">"imageUrl"</span>: <span class="json-str">"https://example.com/image.jpg"</span>,
+    <span class="json-key">"slug"</span>: <span class="json-str">"consult"</span>,
+    <span class="json-key">"pageContent"</span>: <span class="json-str">"&lt;h2&gt;สำนักงาน...&lt;/h2&gt;"</span>,
+    <span class="json-key">"category"</span>: <span class="json-str">"help"</span>,
+    <span class="json-key">"createdAt"</span>: <span class="json-str">"2025-01-01T00:00:00.000Z"</span>,
+    <span class="json-key">"updatedAt"</span>: <span class="json-str">"2025-01-01T00:00:00.000Z"</span>
+  }
+]</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">category ไม่อยู่ใน allowlist</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /api/cards/slug/:slug -->
+        <div class="endpoint" id="get-card-slug">
+          <div class="endpoint-header">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/api/cards/slug/<span class="param">:slug</span></span>
+            <span class="auth-badge public">Public</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ดึง card เดียวตาม slug — ใช้สำหรับ <code class="inline">card-detail.html?slug=...</code>
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">slug</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">slug ของ card — lowercase, a-z 0-9 - _ เท่านั้น</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON Object</span>
+                <button class="code-block-copy" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre>{
+  <span class="json-key">"id"</span>: <span class="json-str">"consult-card"</span>,
+  <span class="json-key">"title"</span>: <span class="json-str">"ศูนย์รับปรึกษากฎหมาย"</span>,
+  <span class="json-key">"subtitle"</span>: <span class="json-str">"..."</span>,
+  <span class="json-key">"description"</span>: <span class="json-str">"..."</span>,
+  <span class="json-key">"imageUrl"</span>: <span class="json-str">"https://..."</span>,
+  <span class="json-key">"slug"</span>: <span class="json-str">"consult"</span>,
+  <span class="json-key">"pageContent"</span>: <span class="json-str">"&lt;h2&gt;...&lt;/h2&gt;"</span>,
+  <span class="json-key">"category"</span>: <span class="json-str">"help"</span>,
+  <span class="json-key">"createdAt"</span>: <span class="json-str">"..."</span>,
+  <span class="json-key">"updatedAt"</span>: <span class="json-str">"..."</span>
+}</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc"><code class="inline">"slug ไม่ถูกต้อง"</code></span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc"><code class="inline">"Not found"</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /api/cards/:id -->
+        <div class="endpoint" id="get-card-id">
+          <div class="endpoint-header">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/api/cards/<span class="param">:id</span></span>
+            <span class="auth-badge public">Public</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ดึง card เดียวตาม Firestore document ID
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">Firestore document ID — ใช้ <code class="inline">a-z A-Z 0-9 _ -</code> เท่านั้น, สูงสุด 128 ตัวอักษร</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <p class="endpoint-desc">โครงสร้างเดียวกับ <code class="inline">GET /api/cards/slug/:slug</code></p>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc"><code class="inline">"id ไม่ถูกต้อง"</code></span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc"><code class="inline">"Not found"</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- POST /api/cards -->
+        <div class="endpoint" id="post-card">
+          <div class="endpoint-header">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/api/cards</span>
+            <span class="auth-badge admin">Admin</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              สร้าง card ใหม่ — ระบบจะเพิ่ม <code class="inline">createdAt</code> และ <code class="inline">updatedAt</code> อัตโนมัติ
+              เนื้อหา <code class="inline">pageContent</code> จะถูก sanitize ก่อนเก็บ
+            </p>
+
+            <div class="sub-title">Request Body</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">title</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">ชื่อหัวข้อ — สูงสุด 200 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">subtitle</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">หัวข้อย่อย — สูงสุด 300 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">description</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">รายละเอียด — สูงสุด 1,000 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">imageUrl</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">URL รูปภาพ — http/https เท่านั้น, สูงสุด 2,048 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">slug</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">URL-friendly identifier — lowercase, a-z 0-9 _ - เท่านั้น</td>
+                </tr>
+                <tr>
+                  <td class="param-name">pageContent</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">เนื้อหา HTML ที่ถูก sanitize — สูงสุด 20,000 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req optional">Optional</span></td>
+                  <td class="param-desc">ค่าที่อนุญาต: <code class="inline">""</code>, <code class="inline">help</code>, <code class="inline">article</code>, <code class="inline">resource</code></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Example Request</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">cURL</span>
+                <button class="code-block-copy" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre>curl -X POST http://localhost:3000/api/cards \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -d '{
+    "title": "ศูนย์รับปรึกษากฎหมาย",
+    "subtitle": "แหล่งรวมหน่วยงานให้คำปรึกษา",
+    "slug": "consult",
+    "category": "help",
+    "pageContent": "&lt;h2&gt;สำนักงานอัยการสูงสุด&lt;/h2&gt;"
+  }'</pre>
+            </div>
+
+            <div class="sub-title">Response — 201 Created</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON</span>
+              </div>
+              <pre>{
+  <span class="json-key">"id"</span>: <span class="json-str">"abc123def456"</span>
+}</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">ข้อมูลไม่ถูกต้อง — เช่น <code class="inline">"กรุณากรอก หัวข้อ"</code></span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">401</span>
+                <span class="status-desc">ไม่มี token</span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">403</span>
+                <span class="status-desc">ไม่มีสิทธิ์แอดมิน</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PUT /api/cards/:id -->
+        <div class="endpoint" id="put-card">
+          <div class="endpoint-header">
+            <span class="endpoint-method put">PUT</span>
+            <span class="endpoint-path">/api/cards/<span class="param">:id</span></span>
+            <span class="auth-badge admin">Admin</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              อัปเดต card — ส่งเฉพาะ fields ที่ต้องการแก้ไข (partial update)
+              ระบบจะอัปเดต <code class="inline">updatedAt</code> อัตโนมัติ
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">Firestore document ID</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Request Body</div>
+            <p class="endpoint-desc">
+              เหมือนกับ <code class="inline">POST /api/cards</code> แต่ทุก field เป็น optional (partial update)
+              ต้องส่งอย่างน้อย 1 field มิฉะนั้นจะได้ 400 — <code class="inline">"ไม่มีข้อมูลสำหรับอัปเดต"</code>
+            </p>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON</span>
+              </div>
+              <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"updated"</span>
+}</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">id ไม่ถูกต้อง หรือไม่มีข้อมูลสำหรับอัปเดต</span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc">ไม่พบ card</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DELETE /api/cards/:id -->
+        <div class="endpoint" id="delete-card">
+          <div class="endpoint-header">
+            <span class="endpoint-method delete">DELETE</span>
+            <span class="endpoint-path">/api/cards/<span class="param">:id</span></span>
+            <span class="auth-badge admin">Admin</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ลบ card ถาวร — ไม่สามารถกู้คืนได้
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">Firestore document ID</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON</span>
+              </div>
+              <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"deleted"</span>
+}</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">id ไม่ถูกต้อง</span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc">ไม่พบ card</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ===================== LAWS ENDPOINTS ===================== -->
+      <section>
+        <div class="section-header" id="laws-section">
+          <h2>⚖️ Laws</h2>
+          <p>จัดการข้อมูลกฎหมาย IT — แบ่งตามหมวด computer, privacy, copyright</p>
+        </div>
+
+        <div class="info-box info">
+          <span class="icon">ℹ️</span>
+          <div>
+            <strong>Firestore Structure:</strong> Laws ถูกเก็บใน path
+            <code class="inline">law/{category}/items/{id}</code>
+            — แต่ละ category เป็น sub-collection แยกกัน
+          </div>
+        </div>
+
+        <!-- GET /api/laws/:category -->
+        <div class="endpoint" id="get-laws">
+          <div class="endpoint-header">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/api/laws/<span class="param">:category</span></span>
+            <span class="auth-badge public">Public</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ดึงรายการกฎหมายทั้งหมดของหมวดที่ระบุ เรียงตาม <code class="inline">section</code>
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">
+                    หมวดกฎหมาย — ค่าที่อนุญาต:
+                    <div class="tag-list" style="margin-top:6px">
+                      <span class="tag">computer</span>
+                      <span class="tag">privacy</span>
+                      <span class="tag">copyright</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON Array</span>
+                <button class="code-block-copy" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre>[
+  {
+    <span class="json-key">"id"</span>: <span class="json-str">"law-001"</span>,
+    <span class="json-key">"section"</span>: <span class="json-str">"มาตรา 5"</span>,
+    <span class="json-key">"title"</span>: <span class="json-str">"การเข้าถึงระบบคอมพิวเตอร์โดยมิชอบ"</span>,
+    <span class="json-key">"description"</span>: <span class="json-str">"ห้ามเข้าถึงระบบคอมพิวเตอร์ของผู้อื่น..."</span>,
+    <span class="json-key">"penalty"</span>: <span class="json-str">"จำคุกหรือปรับตามที่กฎหมายกำหนด"</span>
+  }
+]</pre>
+            </div>
+
+            <div class="info-box warning">
+              <span class="icon">📝</span>
+              <div>
+                สำหรับ category <code class="inline">privacy</code> — field <code class="inline">penalty</code> อาจไม่มีใน response
+              </div>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc"><code class="inline">"หมวดหมู่ไม่ถูกต้อง"</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /api/laws/:category/:id -->
+        <div class="endpoint" id="get-law-id">
+          <div class="endpoint-header">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/api/laws/<span class="param">:category</span>/<span class="param">:id</span></span>
+            <span class="auth-badge public">Public</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ดึงข้อมูลกฎหมายรายตัวตาม category และ document ID
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">หมวดกฎหมาย: <code class="inline">computer</code>, <code class="inline">privacy</code>, <code class="inline">copyright</code></td>
+                </tr>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">Firestore document ID</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <p class="endpoint-desc">โครงสร้างเดียวกับ object ใน <code class="inline">GET /api/laws/:category</code> array</p>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">category หรือ id ไม่ถูกต้อง</span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc"><code class="inline">"ไม่พบข้อมูลกฎหมาย"</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- POST /api/laws/:category -->
+        <div class="endpoint" id="post-law">
+          <div class="endpoint-header">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/api/laws/<span class="param">:category</span></span>
+            <span class="auth-badge admin">Admin</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              สร้างรายการกฎหมายใหม่ในหมวดที่ระบุ
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">หมวดกฎหมาย: <code class="inline">computer</code>, <code class="inline">privacy</code>, <code class="inline">copyright</code></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Request Body</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">section</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">มาตรา — สูงสุด 80 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">title</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">ชื่อหัวข้อ — สูงสุด 200 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">description</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">รายละเอียด — สูงสุด 5,000 ตัวอักษร</td>
+                </tr>
+                <tr>
+                  <td class="param-name">penalty</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req conditional">Conditional</span></td>
+                  <td class="param-desc">โทษ — required เฉพาะ <code class="inline">computer</code> และ <code class="inline">copyright</code>, ไม่ required สำหรับ <code class="inline">privacy</code> — สูงสุด 2,000 ตัวอักษร</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Example Request</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">cURL</span>
+                <button class="code-block-copy" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre>curl -X POST http://localhost:3000/api/laws/computer \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -d '{
+    "section": "มาตรา 5",
+    "title": "การเข้าถึงระบบคอมพิวเตอร์โดยมิชอบ",
+    "description": "ห้ามเข้าถึงระบบคอมพิวเตอร์ของผู้อื่นโดยไม่ได้รับอนุญาต",
+    "penalty": "จำคุกหรือปรับตามที่กฎหมายกำหนด"
+  }'</pre>
+            </div>
+
+            <div class="sub-title">Response — 201 Created</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON</span>
+              </div>
+              <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"เพิ่มข้อมูลกฎหมายสำเร็จ"</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- PUT /api/laws/:category/:id -->
+        <div class="endpoint" id="put-law">
+          <div class="endpoint-header">
+            <span class="endpoint-method put">PUT</span>
+            <span class="endpoint-path">/api/laws/<span class="param">:category</span>/<span class="param">:id</span></span>
+            <span class="auth-badge admin">Admin</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              แก้ไขข้อมูลกฎหมาย — ต้องส่ง body ครบทุก required fields (full replacement ของ editable fields)
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">หมวดกฎหมาย</td>
+                </tr>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">Firestore document ID</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Request Body</div>
+            <p class="endpoint-desc">เหมือนกับ <code class="inline">POST /api/laws/:category</code> — ทุก required fields ยังคง required</p>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON</span>
+              </div>
+              <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"แก้ไขข้อมูลกฎหมายสำเร็จ"</span>
+}</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">category, id, หรือ body ไม่ถูกต้อง</span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc"><code class="inline">"ไม่พบข้อมูลกฎหมาย"</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DELETE /api/laws/:category/:id -->
+        <div class="endpoint" id="delete-law">
+          <div class="endpoint-header">
+            <span class="endpoint-method delete">DELETE</span>
+            <span class="endpoint-path">/api/laws/<span class="param">:category</span>/<span class="param">:id</span></span>
+            <span class="auth-badge admin">Admin</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">
+              ลบรายการกฎหมาย — ถาวร ไม่สามารถกู้คืนได้
+            </p>
+
+            <div class="sub-title">Path Parameters</div>
+            <table class="params-table">
+              <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">category</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">หมวดกฎหมาย</td>
+                </tr>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string</td>
+                  <td><span class="param-req required">Required</span></td>
+                  <td class="param-desc">Firestore document ID</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="sub-title">Response — 200 OK</div>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-label">JSON</span>
+              </div>
+              <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"ลบข้อมูลกฎหมายสำเร็จ"</span>
+}</pre>
+            </div>
+
+            <div class="sub-title">Error Responses</div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-code s4xx">400</span>
+                <span class="status-desc">category หรือ id ไม่ถูกต้อง</span>
+              </div>
+              <div class="status-item">
+                <span class="status-code s4xx">404</span>
+                <span class="status-desc"><code class="inline">"ไม่พบข้อมูลกฎหมาย"</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ===================== DATA SCHEMAS ===================== -->
+      <section id="data-schemas">
+        <div class="section-header">
+          <h2>📦 Data Schemas</h2>
+          <p>โครงสร้างข้อมูลหลักที่ API ใช้งาน</p>
+        </div>
+
+        <div class="sub-title">Card Object</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-label">TypeScript-style Schema</span>
+          </div>
+          <pre><span class="json-comment">// Card — บทความ/ข้อมูลศูนย์ช่วยเหลือ</span>
+{
+  <span class="json-key">id</span>:          <span class="param-type">string</span>    <span class="json-comment">// Firestore doc ID (auto-generated)</span>
+  <span class="json-key">title</span>:       <span class="param-type">string</span>    <span class="json-comment">// required, max 200</span>
+  <span class="json-key">subtitle</span>:    <span class="param-type">string</span>    <span class="json-comment">// optional, max 300</span>
+  <span class="json-key">description</span>: <span class="param-type">string</span>    <span class="json-comment">// optional, max 1,000</span>
+  <span class="json-key">imageUrl</span>:    <span class="param-type">string</span>    <span class="json-comment">// optional, http/https only, max 2,048</span>
+  <span class="json-key">slug</span>:        <span class="param-type">string</span>    <span class="json-comment">// optional, lowercase a-z0-9_-, max 100</span>
+  <span class="json-key">pageContent</span>: <span class="param-type">string</span>    <span class="json-comment">// optional, sanitized HTML, max 20,000</span>
+  <span class="json-key">category</span>:    <span class="param-type">string</span>    <span class="json-comment">// "" | "help" | "article" | "resource"</span>
+  <span class="json-key">createdAt</span>:   <span class="param-type">DateTime</span>  <span class="json-comment">// auto-set on create</span>
+  <span class="json-key">updatedAt</span>:   <span class="param-type">DateTime</span>  <span class="json-comment">// auto-set on create & update</span>
+}</pre>
+        </div>
+
+        <div class="sub-title" style="margin-top:24px">Law Object</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-label">TypeScript-style Schema</span>
+          </div>
+          <pre><span class="json-comment">// Law — รายการกฎหมาย IT</span>
+{
+  <span class="json-key">id</span>:          <span class="param-type">string</span>    <span class="json-comment">// Firestore doc ID</span>
+  <span class="json-key">section</span>:     <span class="param-type">string</span>    <span class="json-comment">// required, max 80 (เช่น "มาตรา 5")</span>
+  <span class="json-key">title</span>:       <span class="param-type">string</span>    <span class="json-comment">// required, max 200</span>
+  <span class="json-key">description</span>: <span class="param-type">string</span>    <span class="json-comment">// required, max 5,000</span>
+  <span class="json-key">penalty</span>:     <span class="param-type">string</span>    <span class="json-comment">// required for computer & copyright, max 2,000</span>
+                          <span class="json-comment">// optional/absent for privacy</span>
+}</pre>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ===================== SECURITY ===================== -->
+      <section id="security">
+        <div class="section-header">
+          <h2>🔒 Security</h2>
+          <p>มาตรการรักษาความปลอดภัยที่ backend ใช้งาน</p>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="label">HTTP Headers</div>
+            <div class="value" style="font-size:13px">Helmet.js</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">CORS</div>
+            <div class="value" style="font-size:13px">Origin Allowlist</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Rate Limit</div>
+            <div class="value" style="font-size:13px">100 req / 15min</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Body Size</div>
+            <div class="value" style="font-size:13px">Max 10kb</div>
+          </div>
+        </div>
+
+        <div class="sub-title" style="margin-top:24px">Security Features</div>
+        <ul class="rules-list">
+          <li>Frontend ไม่เข้าถึง Firestore โดยตรง — ผ่าน backend API เท่านั้น</li>
+          <li>Firestore rules ปิดกั้น client reads/writes</li>
+          <li>Backend ใช้ Firebase Admin SDK</li>
+          <li>Write endpoints ต้องมี admin auth</li>
+          <li>CORS กำหนด allowed origins ผ่าน <code class="inline">ALLOWED_ORIGINS</code> env</li>
+          <li>Production ต้องตั้ง <code class="inline">ALLOWED_ORIGINS</code> มิฉะนั้น server ไม่ start</li>
+          <li>Helmet.js ตั้ง security headers อัตโนมัติ (CSP, XSS protection, etc.)</li>
+          <li>Request body ถูกจำกัดขนาด 10kb เพื่อป้องกัน abuse</li>
+          <li>User content ถูก sanitize ทั้งตอนเขียนและอ่าน</li>
+          <li>Error responses ไม่เปิดเผยข้อมูลภายใน (stack trace, file path)</li>
+          <li>ไฟล์ <code class="inline">.env</code> และ service account keys อยู่ใน <code class="inline">.gitignore</code></li>
+        </ul>
+
+        <div class="info-box danger">
+          <span class="icon">🚨</span>
+          <div>
+            <strong>XSS Protection:</strong> ข้อมูลจาก user ถูก sanitize ทั้ง input (เขียน) และ output (อ่าน)
+            — tags ที่ไม่อนุญาตถูกลบ, event handlers ถูกลบ, <code class="inline">javascript:</code> URLs ถูก reject
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <div style="margin-top:80px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
+        <p style="font-size:13px; color:var(--text-muted);">
+          IT LAW CENTER API Documentation — Generated for TestSprite
+          <br>
+          <span style="font-size:11px;">Express 5 · Firebase Firestore · Node.js</span>
+        </p>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // Mobile sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('mobileToggle');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+
+    // Close sidebar on navigation (mobile)
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 900) {
+          sidebar.classList.remove('open');
+          overlay.classList.remove('open');
+        }
+      });
+    });
+
+    // Copy code
+    function copyCode(btn) {
+      const pre = btn.closest('.code-block').querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.color = 'var(--accent-green)';
+        btn.style.borderColor = 'var(--accent-green)';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }, 1500);
+      });
+    }
+
+    // Active sidebar link on scroll
+    const sections = document.querySelectorAll('[id]');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          sidebarLinks.forEach(link => {
+            const isActive = link.getAttribute('href') === `#${id}`;
+            link.style.color = isActive ? 'var(--text-primary)' : '';
+            link.style.borderLeftColor = isActive ? 'var(--accent-blue)' : 'transparent';
+            link.style.background = isActive ? 'rgba(255,255,255,0.03)' : '';
+          });
+        }
+      });
+    }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+
+    sections.forEach(section => observer.observe(section));
+  </script>
+</body>
+</html>

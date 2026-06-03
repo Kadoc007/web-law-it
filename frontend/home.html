@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 
 <head>
   <meta charset="UTF-8">
-  <title>คลังกฎหมาย IT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คลังกฎหมาย IT</title>
 
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/main.css">
-  <link rel="stylesheet" href="css/line-button.css">
 </head>
 
 <body>
@@ -33,23 +33,23 @@
 
       <div class="banner-track">
         <a class="banner active" href="card-detail.html?slug=consult">
-          <img src="https://i.pinimg.com/736x/51/2b/69/512b699757a94212e26490d848d213bd.jpg">
+          <img src="https://i.pinimg.com/736x/51/2b/69/512b699757a94212e26490d848d213bd.jpg" alt="Legal consultation center">
           <div class="banner-text">
             <h3>ศูนย์รับปรึกษากฎหมาย</h3>
             <p> แหล่งรวมหน่วยงานให้คำปรึกษาและช่วยเหลือทางกฎหมายสำหรับประชาชนทั่วไป</p>
           </div>
         </a>
 
-        <a class="banner" href="article2.html">
-          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg">
+        <a class="banner" href="index.html?category=privacy">
+          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Legal article">
           <div class="banner-text">
             <h3>PDPA คืออะไร?</h3>
             <p>สรุปเข้าใจง่ายใน 5 นาที</p>
           </div>
         </a>
 
-        <a class="banner" href="article3.html">
-          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg">
+        <a class="banner" href="index.html?category=copyright">
+          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Legal article">
           <div class="banner-text">
             <h3>ลิขสิทธิ์ออนไลน์</h3>
             <p>แชร์แบบไหนไม่ผิด</p>
@@ -85,34 +85,61 @@
 
       </div>
     </section>
-    <!-- ===== Extra Content (Dynamic from Firebase) ===== -->
+
+    <!-- ===== LINE Consultation Card ===== -->
+    <section class="line-consult" aria-labelledby="line-consult-title">
+      <div class="line-consult-copy">
+        <h2 id="line-consult-title">ปรึกษาปัญหาเบื้องต้นได้ทันที</h2>
+        <p>
+          เชื่อมต่อกับ LINE Chatbot ของเราเพื่อรับข้อมูลกฎหมายไอทีอัตโนมัติ 24 ชั่วโมง
+          หรือรับข่าวสารล่าสุดผ่านช่องทางติดต่อ
+        </p>
+
+        <a
+          href="https://line.me/R/ti/p/@640smsos"
+          class="line-consult-button"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="เพิ่มเพื่อนบน LINE เพื่อปรึกษาปัญหาเบื้องต้น"
+        >
+          <span class="line-consult-icon" aria-hidden="true"></span>
+          เพิ่มเพื่อนบน LINE
+        </a>
+      </div>
+
+      <div class="line-consult-visual" aria-hidden="true">
+        <div class="line-visual-backdrop">
+          <div class="line-phone-mockup">
+            <div class="line-phone-speaker"></div>
+            <div class="line-chat-screen">
+              <div class="line-chat-header">
+                <span>IT LAW CENTER</span>
+                <span></span>
+              </div>
+              <div class="line-chat-bubble line-chat-bubble-user"></div>
+              <div class="line-chat-bubble line-chat-bubble-bot"></div>
+              <div class="line-chat-bubble line-chat-bubble-short"></div>
+              <div class="line-chat-actions">
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Extra Content (Dynamic from Backend API) ===== -->
     <section class="extra-content">
       <h2 class="section-title">ศูนย์ช่วยเหลือ / ความรู้เพิ่มเติม</h2>
 
       <div id="dynamic-cards" class="image-cards">
-        <!-- จะโหลดจาก Firebase -->
+        <!-- จะโหลดจาก Backend API -->
         <div class="loading-cards">
           <p>กำลังโหลด...</p>
         </div>
       </div>
     </section>
-    <!-- ===== LINE Contact Floating Button ===== -->
-    <a href="https://line.me/R/ti/p/@640smsos" class="line-float" target="_blank" title="มีคำถาม แอดเลย">
-      <img src="https://i.pinimg.com/736x/b2/22/db/b222dbc287cbf2b0100bddb6e5991a08.jpg" alt="Add LINE">
-      <span>สามารถปรึกษา<br>เบื้องต้นกับ<br>Chatbotได้</span>
-    </a>
-    <script>
-      const lineBtn = document.querySelector(".line-float");
-      if (lineBtn) {
-        setInterval(() => {
-          lineBtn.classList.add("wiggle");
-          // เอา class ออกหลัง animation จบ
-          setTimeout(() => {
-            lineBtn.classList.remove("wiggle");
-          }, 900);
-        }, 5000); // ทุก 5 วินาที
-      }
-    </script>
 
   </main>
 
@@ -154,84 +181,131 @@
     setInterval(nextBanner, 6000);
   </script>
 
-  <!-- ===== Firebase SDK ===== -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
+  <!-- ===== Backend API Client ===== -->
+  <script src="js/api-config.js"></script>
+  <script src="js/api.js"></script>
 
-  <!-- ===== โหลดการ์ดจาก Firebase โดยตรง ===== -->
+  <!-- ===== โหลดการ์ดผ่าน Backend API ===== -->
   <script>
+    const fallbackCardImage = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400";
+
+    function clearElement(element) {
+      element.replaceChildren();
+    }
+
+    function createBackendNotice(title, message) {
+      const notice = document.createElement("div");
+      notice.className = "backend-required";
+
+      const heading = document.createElement("h3");
+      heading.textContent = title;
+
+      const text = document.createElement("p");
+      text.textContent = message;
+
+      notice.append(heading, text);
+      return notice;
+    }
+
+    function setSafeImage(img, src, alt, fallbackSrc) {
+      const finalFallback = fallbackSrc || fallbackCardImage;
+      img.alt = alt || "";
+      img.src = getSafeImageUrl(src, finalFallback);
+      img.addEventListener("error", () => {
+        if (img.src !== finalFallback) {
+          img.src = finalFallback;
+        }
+      }, { once: true });
+    }
+
+    function getSafeImageUrl(src, fallbackSrc) {
+      if (!src) return fallbackSrc;
+
+      try {
+        const url = new URL(src, window.location.href);
+        if (url.protocol === "http:" || url.protocol === "https:") {
+          return url.href;
+        }
+      } catch (err) {
+        console.warn("Invalid image URL:", err);
+      }
+
+      return fallbackSrc;
+    }
+
+    function getCardDetailUrl(card) {
+      if (card.slug) {
+        return `card-detail.html?slug=${encodeURIComponent(card.slug)}`;
+      }
+
+      return `card-detail.html?id=${encodeURIComponent(card.id)}`;
+    }
+
+    function renderDynamicCard(card) {
+      const detailUrl = getCardDetailUrl(card);
+
+      const item = document.createElement("div");
+      item.className = "image-card";
+      item.tabIndex = 0;
+      item.setAttribute("role", "link");
+
+      const openDetail = () => {
+        window.location.href = detailUrl;
+      };
+
+      item.addEventListener("click", openDetail);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetail();
+        }
+      });
+
+      const img = document.createElement("img");
+      setSafeImage(img, card.imageUrl, card.title, fallbackCardImage);
+
+      const body = document.createElement("div");
+      body.className = "image-card-body";
+
+      const title = document.createElement("h3");
+      title.textContent = card.title || "ไม่มีหัวข้อ";
+
+      const description = document.createElement("p");
+      description.textContent = card.subtitle || card.description || "";
+
+      body.append(title, description);
+      item.append(img, body);
+      return item;
+    }
+
     async function loadDynamicCards() {
       const container = document.getElementById("dynamic-cards");
 
       try {
-        // เรียก Firebase Firestore โดยตรง
-        const snapshot = await db.collection("cards").orderBy("createdAt", "desc").get();
-        const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const cards = await window.apiClient.cards.list();
 
         if (cards.length === 0) {
-          container.innerHTML = `
-          <div class="image-card" onclick="location.href='consult.html'">
-            <img src="https://i.pinimg.com/736x/51/2b/69/512b699757a94212e26490d848d213bd.jpg" alt="Cyber Law">
-            <div class="image-card-body">
-              <h3>ศูนย์รับปรึกษากฎหมาย</h3>
-              <p>แหล่งรวมหน่วยงานให้คำปรึกษาและช่วยเหลือทางกฎหมาย สำหรับประชาชนทั่วไป</p>
-            </div>
-          </div>
-        `;
+          clearElement(container);
+          container.append(createBackendNotice(
+            "ยังไม่มีข้อมูล cards จาก Backend",
+            "เมื่อเพิ่มข้อมูลผ่าน Backend แล้ว การ์ดจะแสดงในส่วนนี้"
+          ));
           return;
         }
 
-        container.innerHTML = "";
+        clearElement(container);
 
         cards.forEach(card => {
-          const imgSrc = card.imageUrl || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400";
-
-          // สร้าง URL สำหรับหน้ารายละเอียด
-          let detailUrl = `card-detail.html?id=${card.id}`;
-          if (card.slug) {
-            detailUrl = `card-detail.html?slug=${card.slug}`;
-          }
-
-          container.innerHTML += `
-          <div class="image-card" onclick="location.href='${detailUrl}'">
-            <img src="${imgSrc}" alt="${card.title}" onerror="this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400'">
-            <div class="image-card-body">
-              <h3>${card.title}</h3>
-              <p>${card.subtitle || card.description || ""}</p>
-            </div>
-          </div>
-        `;
+          container.append(renderDynamicCard(card));
         });
 
       } catch (err) {
         console.error("Error loading cards:", err);
-        // แสดง fallback cards ถ้าโหลดไม่ได้
-        container.innerHTML = `
-        <div class="image-card" onclick="location.href='consult.html'">
-          <img src="https://i.pinimg.com/736x/51/2b/69/512b699757a94212e26490d848d213bd.jpg" alt="Cyber Law">
-          <div class="image-card-body">
-            <h3>ศูนย์รับปรึกษากฎหมาย</h3>
-            <p>แหล่งรวมหน่วยงานให้คำปรึกษาและช่วยเหลือทางกฎหมาย</p>
-          </div>
-        </div>
-
-        <div class="image-card" onclick="location.href='article2.html'">
-          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="PDPA">
-          <div class="image-card-body">
-            <h3>PDPA คืออะไร?</h3>
-            <p>เข้าใจง่ายสำหรับผู้เริ่มต้น</p>
-          </div>
-        </div>
-
-        <div class="image-card" onclick="location.href='article3.html'">
-          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Copyright">
-          <div class="image-card-body">
-            <h3>ลิขสิทธิ์บนโลกออนไลน์</h3>
-            <p>โพสต์ แชร์ โหลด แบบไหนผิด</p>
-          </div>
-        </div>
-      `;
+        clearElement(container);
+        container.append(createBackendNotice(
+          "ยังไม่สามารถเชื่อมต่อ Backend ได้",
+          "กรุณารัน backend ก่อน จึงจะดึง cards มาแสดงได้"
+        ));
       }
     }
 
