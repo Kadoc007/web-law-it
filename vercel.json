@@ -66,6 +66,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
       "source": "/",
       "destination": "/home.html"
     }
