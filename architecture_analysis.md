@@ -667,3 +667,22 @@ Validation:
 - `node --check` passed for frontend/backend/API/scripts JavaScript files outside `node_modules`.
 - Runtime XSS pattern scan found no `innerHTML +=`, `innerHTML =`, `insertAdjacentHTML`, `document.write`, `outerHTML`, `eval`, or `new Function` matches in active frontend/backend/API/scripts scope.
 - No active runtime references to `api-docs.js` or `api-docs.html` were found outside historical documentation notes.
+
+## Vercel Admin Edit CORS Fix - 2026-06-14
+
+Diagnosed live admin edit failure where browser `PUT /api/laws/:category/:id` returned generic HTTP 500 while read APIs still worked:
+
+- Live read checks passed for `/api/laws/config/categories`.
+- A direct `PUT` without an `Origin` header reached `adminAuth` and returned the expected 401 token error.
+- A browser-like `PUT` with `Origin: https://web-law-it.vercel.app` returned the generic 500 before route handlers, confirming CORS rejection before Firestore/update logic.
+
+Fix:
+
+- Added `backend/utils/corsConfig.js` so CORS origin handling is testable.
+- Updated `backend/server.js` to trust proxy headers on Vercel and allow the current request host as same-origin, covering production aliases such as `web-law-it.vercel.app` even when `VERCEL_URL` points to a deployment-specific hostname.
+- Kept explicit `ALLOWED_ORIGINS` support for custom domains/preview domains.
+- Changed CORS denial responses from generic 500 to HTTP 403 with `errorCode: cors-origin-denied` and `context: CORS`.
+
+Validation added:
+
+- Backend tests now cover same-origin Vercel host allowance and unknown production origin rejection.

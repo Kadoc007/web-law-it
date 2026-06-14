@@ -7,6 +7,11 @@ import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import lawRoutes from "./routes/lawRoutes.js";
 import cardRoutes from "./routes/cardRoutes.js";
+import {
+  createCorsOptionsDelegate,
+  getVercelOrigin,
+  parseOriginList,
+} from "./utils/corsConfig.js";
 
 // โหลด environment variables
 dotenv.config({ path: fileURLToPath(new URL(".env", import.meta.url)) });
@@ -14,50 +19,27 @@ dotenv.config({ path: fileURLToPath(new URL(".env", import.meta.url)) });
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
-const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
+const vercelOrigin = getVercelOrigin(process.env.VERCEL_URL);
 
 // === Security Middleware ===
+app.set("trust proxy", 1);
 
 // Helmet — ตั้ง HTTP security headers อัตโนมัติ
 app.use(helmet());
 
 // CORS — จำกัดเฉพาะ origins ที่อนุญาต
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter((origin) => origin.length > 0);
+const allowedOrigins = parseOriginList(process.env.ALLOWED_ORIGINS || "");
 
-if (vercelOrigin) {
-  allowedOrigins.push(vercelOrigin);
+if (isProduction && allowedOrigins.length === 0 && !vercelOrigin) {
+  console.error("[CORS] production ต้องตั้งค่า ALLOWED_ORIGINS หรือ VERCEL_URL ก่อนเริ่ม server");
+  throw new Error("ALLOWED_ORIGINS or VERCEL_URL is required in production");
 }
 
-if (isProduction && allowedOrigins.length === 0) {
-  console.error("[CORS] production ต้องตั้งค่า ALLOWED_ORIGINS ก่อนเริ่ม server");
-  throw new Error("ALLOWED_ORIGINS is required in production");
-}
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // อนุญาต requests ที่ไม่มี origin เช่น Postman หรือ server-to-server
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.length === 0) {
-        console.warn(
-          "[CORS] ALLOWED_ORIGINS ยังไม่ได้ตั้งค่า — อนุญาตทุก origin เฉพาะ dev mode"
-        );
-        return callback(null, true);
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`Origin ${origin} ไม่ได้รับอนุญาต`));
-    },
-    credentials: true,
-  })
-);
+app.use(cors(createCorsOptionsDelegate({
+  configuredOrigins: allowedOrigins,
+  isProduction,
+  vercelOrigin,
+})));
 
 // Rate Limiting — จำกัดจำนวน requests ต่อ IP
 const limiter = rateLimit({
@@ -89,7 +71,17 @@ app.get("/api", (req, res) => {
 // === Global Error Handler ===
 app.use((err, req, res, _next) => {
   console.error("[Server Error]", err.message);
-  res.status(500).json({ message: "เกิดข้อผิดพลาดภายในระบบ" });
+  const status = Number.isInteger(err.status) ? err.status : 500;
+  const payload = {
+    message: status === 403 && err.code === "cors-origin-denied"
+      ? "Origin ไม่ได้รับอนุญาต"
+      : "เกิดข้อผิดพลาดภายในระบบ",
+  };
+
+  if (err.code) payload.errorCode = err.code;
+  if (err.code === "cors-origin-denied") payload.context = "CORS";
+
+  res.status(status).json(payload);
 });
 
 function isDirectRun() {

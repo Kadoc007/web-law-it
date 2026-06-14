@@ -14,6 +14,12 @@ import {
   validateLawInput,
   validateSlugParam,
 } from "../utils/validation.js";
+import {
+  createCorsOptionsDelegate,
+  getRequestOrigin,
+  getVercelOrigin,
+  parseOriginList,
+} from "../utils/corsConfig.js";
 import { sortLawsBySection } from "../utils/lawSort.js";
 
 test("law category config has unique active ids", () => {
@@ -168,4 +174,58 @@ test("response sanitizers protect legacy Firestore records", () => {
     createdAt: undefined,
     updatedAt: undefined,
   });
+});
+
+test("cors config allows current same-origin Vercel host", async () => {
+  assert.deepEqual(parseOriginList("https://a.com, https://b.com "), [
+    "https://a.com",
+    "https://b.com",
+  ]);
+  assert.equal(getVercelOrigin("web-law-it.vercel.app"), "https://web-law-it.vercel.app");
+
+  const req = {
+    headers: {
+      origin: "https://web-law-it.vercel.app",
+      "x-forwarded-proto": "https",
+      "x-forwarded-host": "web-law-it.vercel.app",
+    },
+    protocol: "http",
+  };
+
+  assert.equal(getRequestOrigin(req), "https://web-law-it.vercel.app");
+
+  const delegate = createCorsOptionsDelegate({
+    configuredOrigins: [],
+    isProduction: true,
+    vercelOrigin: "https://web-law-it-git-main-user.vercel.app",
+  });
+
+  const options = await new Promise((resolve, reject) => {
+    delegate(req, (err, corsOptions) => (err ? reject(err) : resolve(corsOptions)));
+  });
+
+  assert.deepEqual(options, { origin: true, credentials: true });
+});
+
+test("cors config rejects unknown production origins", async () => {
+  const req = {
+    headers: {
+      origin: "https://evil.example",
+      "x-forwarded-proto": "https",
+      "x-forwarded-host": "web-law-it.vercel.app",
+    },
+    protocol: "http",
+  };
+
+  const delegate = createCorsOptionsDelegate({
+    configuredOrigins: ["https://web-law-it.vercel.app"],
+    isProduction: true,
+  });
+
+  await assert.rejects(
+    new Promise((resolve, reject) => {
+      delegate(req, (err, corsOptions) => (err ? reject(err) : resolve(corsOptions)));
+    }),
+    /ไม่ได้รับอนุญาต/
+  );
 });
