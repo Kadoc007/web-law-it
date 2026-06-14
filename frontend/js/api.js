@@ -24,6 +24,25 @@
     return url.toString();
   }
 
+  function getApiErrorMessage(response, payload) {
+    const baseMessage = payload && payload.message ? payload.message : "API request failed";
+    const details = [];
+
+    if (payload && payload.errorCode) {
+      details.push(`code: ${payload.errorCode}`);
+    }
+
+    if (payload && payload.context) {
+      details.push(`context: ${payload.context}`);
+    }
+
+    if (details.length === 0) {
+      details.push(`status: ${response.status}`);
+    }
+
+    return `${baseMessage} (${details.join(", ")})`;
+  }
+
   async function request(path, options = {}) {
     const {
       method = "GET",
@@ -70,8 +89,7 @@
       : await response.text();
 
     if (!response.ok) {
-      const message = payload && payload.message ? payload.message : "API request failed";
-      throw new Error(message);
+      throw new Error(getApiErrorMessage(response, payload));
     }
 
     return payload;
