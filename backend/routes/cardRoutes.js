@@ -92,7 +92,7 @@ router.put("/:id", adminAuth, async (req, res) => {
       updatedAt: new Date(),
     };
 
-    await docRef.update(data);
+    await docRef.set(data, { merge: true });
     res.json({ message: "updated" });
   } catch (err) {
     handleRouteError(res, err, "CardRoutes:update");

@@ -115,7 +115,7 @@ router.put("/:category/:id", adminAuth, async (req, res) => {
       return res.status(404).json({ message: "ไม่พบข้อมูลกฎหมาย" });
     }
 
-    await docRef.update(data);
+    await docRef.set(data, { merge: true });
 
     res.json({ message: "แก้ไขข้อมูลกฎหมายสำเร็จ" });
   } catch (err) {
