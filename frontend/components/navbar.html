@@ -1,17 +1,15 @@
-<nav class="navbar">
-  <div class="nav-container">
+<nav class="navbar app-navbar">
+  <div class="container-xl nav-container">
 
-    <div class="logo" onclick="location.href='home.html'">
+    <a class="logo" href="home.html">
       ⚖️ <span>IT LAW CENTER</span>
-    </div>
+    </a>
 
-    <ul class="nav-links" id="navMenu">
-      <li><a href="home.html">Home</a></li>
-      <li><a href="card-detail.html?slug=consult">ศูนย์รับปรึกษากฎหมาย</a></li>
-      <li><a href="index.html?category=privacy">PDPA</a></li>
-      <li><a href="index.html?category=copyright">Copyright</a></li>
-      <li><a href="admin.html">Login</a></li>
-    </ul>
+    <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-controls="navMenu" aria-expanded="false">
+      <span class="menu-toggle-lines" aria-hidden="true"></span>
+    </button>
+
+    <ul class="nav-links" id="navMenu" aria-label="Primary navigation"></ul>
 
   </div>
 </nav>

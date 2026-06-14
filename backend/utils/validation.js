@@ -1,7 +1,17 @@
 import { HttpError } from "./http.js";
+import {
+  getLawCategoryConfig,
+  hasLawCategory,
+} from "../config/lawCategoryConfig.js";
 
-const LAW_CATEGORIES = new Set(["computer", "privacy", "copyright"]);
 const CARD_CATEGORIES = new Set(["", "help", "article", "resource"]);
+
+const LAW_FIELD_SPECS = Object.freeze({
+  section: { label: "มาตรา", maxLength: 80 },
+  title: { label: "หัวข้อ", maxLength: 200 },
+  description: { label: "รายละเอียด", maxLength: 5000 },
+  penalty: { label: "โทษ", maxLength: 2000 },
+});
 
 const ALLOWED_TAGS = new Set([
   "p",
@@ -227,7 +237,7 @@ export function sanitizeHtml(input) {
 
 export function validateCategory(category) {
   const normalized = normalizeString(category, "หมวดหมู่", 40, { required: true });
-  if (!LAW_CATEGORIES.has(normalized)) {
+  if (!hasLawCategory(normalized)) {
     throw new HttpError(400, "หมวดหมู่ไม่ถูกต้อง");
   }
   return normalized;
@@ -244,28 +254,47 @@ export function validateDocId(id) {
 export function validateLawInput(category, body) {
   requireObject(body);
 
-  const data = {
-    section: normalizeString(body.section, "มาตรา", 80, { required: true }),
-    title: normalizeString(body.title, "หัวข้อ", 200, { required: true }),
-    description: normalizeString(body.description, "รายละเอียด", 5000, { required: true })
-  };
-
-  if (category !== "privacy") {
-    data.penalty = normalizeString(body.penalty, "โทษ", 2000, { required: true });
+  const config = getLawCategoryConfig(category);
+  if (!config) {
+    throw new HttpError(400, "หมวดหมู่ไม่ถูกต้อง");
   }
+
+  const hiddenFields = new Set(config.hiddenFields);
+  const requiredFields = new Set(config.requiredFields);
+  const data = {};
+
+  config.fields.forEach((field) => {
+    if (hiddenFields.has(field)) return;
+
+    const spec = LAW_FIELD_SPECS[field];
+    if (!spec) return;
+
+    data[field] = normalizeString(body[field], spec.label, spec.maxLength, {
+      required: requiredFields.has(field),
+    });
+  });
 
   return data;
 }
 
-export function sanitizeLawRecord(record) {
-  const data = {
-    section: sanitizePlainText(record.section, "มาตรา", 80),
-    title: sanitizePlainText(record.title, "หัวข้อ", 200),
-    description: sanitizePlainText(record.description, "รายละเอียด", 5000),
-  };
+export function sanitizeLawRecord(record, category = "") {
+  const config = getLawCategoryConfig(category);
+  const hiddenFields = new Set(config ? config.hiddenFields : []);
+  const fields = config ? config.fields : ["section", "title", "description"];
+  const data = {};
 
-  if (record.penalty !== undefined) {
-    data.penalty = sanitizePlainText(record.penalty, "โทษ", 2000);
+  fields.forEach((field) => {
+    if (hiddenFields.has(field)) return;
+
+    const spec = LAW_FIELD_SPECS[field];
+    if (!spec) return;
+
+    data[field] = sanitizePlainText(record[field], spec.label, spec.maxLength);
+  });
+
+  if (!config && record.penalty !== undefined) {
+    const spec = LAW_FIELD_SPECS.penalty;
+    data.penalty = sanitizePlainText(record.penalty, spec.label, spec.maxLength);
   }
 
   return data;

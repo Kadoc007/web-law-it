@@ -6,8 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>คลังกฎหมาย IT</title>
 
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://i.pinimg.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/bootstrap-custom.css">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/action-effects.css">
 </head>
 
 <body>
@@ -21,8 +26,8 @@
     <!-- ===== Hero ===== -->
     <section class="hero">
       <div class="hero-content">
-        <h1>ศูนย์รวมกฎหมายด้านเทคโนโลยีสารสนเทศ</h1>
-        <p>
+        <h1 class="text-thai-balance text-thai-mobile-title">ศูนย์รวมกฎหมายด้านเทคโนโลยีสารสนเทศ</h1>
+        <p class="text-thai-readable text-thai-mobile-body">
           แหล่งข้อมูลกฎหมาย IT ฉบับสรุป เข้าใจง่าย
           เพื่อการศึกษาและการใช้งานเบื้องต้น
         </p>
@@ -33,15 +38,15 @@
 
       <div class="banner-track">
         <a class="banner active" href="card-detail.html?slug=consult">
-          <img src="https://i.pinimg.com/736x/51/2b/69/512b699757a94212e26490d848d213bd.jpg" alt="Legal consultation center">
+          <img src="https://i.pinimg.com/736x/51/2b/69/512b699757a94212e26490d848d213bd.jpg" alt="Legal consultation center" decoding="async" fetchpriority="high">
           <div class="banner-text">
-            <h3>ศูนย์รับปรึกษากฎหมาย</h3>
-            <p> แหล่งรวมหน่วยงานให้คำปรึกษาและช่วยเหลือทางกฎหมายสำหรับประชาชนทั่วไป</p>
+            <h3 class="text-thai-readable">ศูนย์รับปรึกษากฎหมาย</h3>
+            <p class="text-thai-readable">แหล่งรวมหน่วยงานให้คำปรึกษาและช่วยเหลือทางกฎหมายสำหรับประชาชนทั่วไป</p>
           </div>
         </a>
 
         <a class="banner" href="index.html?category=privacy">
-          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Legal article">
+          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Legal article" loading="lazy" decoding="async">
           <div class="banner-text">
             <h3>PDPA คืออะไร?</h3>
             <p>สรุปเข้าใจง่ายใน 5 นาที</p>
@@ -49,38 +54,65 @@
         </a>
 
         <a class="banner" href="index.html?category=copyright">
-          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Legal article">
+          <img src="https://i.pinimg.com/736x/73/1f/d8/731fd84ba0a2972af7e0b037e6d74c76.jpg" alt="Legal article" loading="lazy" decoding="async">
           <div class="banner-text">
-            <h3>ลิขสิทธิ์ออนไลน์</h3>
-            <p>แชร์แบบไหนไม่ผิด</p>
+            <h3>โครงสร้างพื้นฐานสารสนเทศ</h3>
+            <p>กฎหมายเพื่อการเข้าถึงเทคโนโลยีอย่างทั่วถึงและเท่าเทียม</p>
           </div>
         </a>
 
       </div>
 
       <!-- Controls -->
-      <button class="banner-btn prev">‹</button>
-      <button class="banner-btn next">›</button>
+      <button class="banner-btn prev btn btn-dark" type="button" aria-label="ก่อนหน้า">‹</button>
+      <button class="banner-btn next btn btn-dark" type="button" aria-label="ถัดไป">›</button>
     </section>
 
 
     <!-- ===== Main Content ===== -->
-    <section class="main">
-      <div class="cards">
+    <section class="main container">
+      <div class="cards row row-cols-1 row-cols-md-3 g-4">
 
-        <div class="card" onclick="location.href='index.html?category=computer'">
-          <h3>กฎหมายคอมพิวเตอร์</h3>
-          <p>พระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์</p>
+        <div class="col">
+          <a class="card category-card surface-card interactive-lift h-100 text-decoration-none" href="index.html?category=computer">
+          <h3 class="text-thai-readable">กฎหมายคอมพิวเตอร์</h3>
+          <p class="text-thai-readable">พระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์</p>
+          </a>
         </div>
 
-        <div class="card" onclick="location.href='index.html?category=privacy'">
-          <h3>PDPA</h3>
-          <p>กฎหมายคุ้มครองข้อมูลส่วนบุคคล</p>
+        <div class="col">
+          <a class="card category-card surface-card interactive-lift h-100 text-decoration-none" href="index.html?category=privacy">
+            <h3 class="text-thai-readable">PDPA</h3>
+            <p class="text-thai-readable">กฎหมายเกี่ยวกับการคุ้มครองข้อมูลส่วนบุคคล</p>
+          </a>
         </div>
 
-        <div class="card" onclick="location.href='index.html?category=copyright'">
-          <h3>ลิขสิทธิ์</h3>
-          <p>กฎหมายทรัพย์สินทางปัญญา</p>
+        <div class="col">
+          <a class="card category-card surface-card interactive-lift h-100 text-decoration-none" href="index.html?category=copyright">
+            <h3 class="text-thai-readable">โครงสร้างพื้นฐานสารสนเทศ</h3>
+            <p class="text-thai-readable">การเข้าถึงเทคโนโลยีอย่างทั่วถึงและเท่าเทียม</p>
+          </a>
+        </div>
+
+        <div class="col">
+          <a class="card category-card surface-card interactive-lift h-100 text-decoration-none" href="index.html?category=eft">
+            <h3 class="text-thai-readable">กฎหมายเกี่ยวกับการโอนเงินทางอิเล็กทรอนิกส์</h3>
+            <p class="text-thai-readable">กฎหมายเกี่ยวกับการโอนเงินทางอิเล็กทรอนิกส์</p>
+          </a>
+        </div>
+
+        <div class="col">
+          <a class="card category-card surface-card interactive-lift h-100 text-decoration-none" href="index.html?category=etl">
+            <h3 class="text-thai-readable">ลายมือชื่ออิเล็กทรอนิกส์</h3>
+            <p class="text-thai-readable">กฎหมายเกี่ยวกับลายมือชื่ออิเล็กทรอนิกส์</p>
+          </a>
+        </div>
+
+        <div class="col">
+          <a class="card category-card surface-card interactive-lift h-100 text-decoration-none" href="index.html?category=eta">
+            <h3 class="text-thai-readable">ธุรกรรมอิเล็กทรอนิกส์</h3>
+            <p class="text-thai-readable">กฎหมายเกี่ยวกับธุรกรรมทางอิเล็กทรอนิกส์</p>
+          </a>
         </div>
 
       </div>
@@ -89,15 +121,15 @@
     <!-- ===== LINE Consultation Card ===== -->
     <section class="line-consult" aria-labelledby="line-consult-title">
       <div class="line-consult-copy">
-        <h2 id="line-consult-title">ปรึกษาปัญหาเบื้องต้นได้ทันที</h2>
-        <p>
+        <h2 id="line-consult-title" class="text-thai-readable">ปรึกษาปัญหาเบื้องต้นได้ทันที</h2>
+        <p class="text-thai-readable">
           เชื่อมต่อกับ LINE Chatbot ของเราเพื่อรับข้อมูลกฎหมายไอทีอัตโนมัติ 24 ชั่วโมง
           หรือรับข่าวสารล่าสุดผ่านช่องทางติดต่อ
         </p>
 
         <a
           href="https://line.me/R/ti/p/@640smsos"
-          class="line-consult-button"
+          class="btn btn-success line-consult-button"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="เพิ่มเพื่อนบน LINE เพื่อปรึกษาปัญหาเบื้องต้น"
@@ -130,7 +162,7 @@
     </section>
 
     <!-- ===== Extra Content (Dynamic from Backend API) ===== -->
-    <section class="extra-content">
+    <section class="extra-content container">
       <h2 class="section-title">ศูนย์ช่วยเหลือ / ความรู้เพิ่มเติม</h2>
 
       <div id="dynamic-cards" class="image-cards">
@@ -143,175 +175,16 @@
 
   </main>
 
-  <!-- โหลด Navbar -->
-  <script>
-    fetch("components/navbar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("navbar").innerHTML = html;
-      });
-  </script>
-
-  <script>
-    const banners = document.querySelectorAll(".banner");
-    const prevBtn = document.querySelector(".banner-btn.prev");
-    const nextBtn = document.querySelector(".banner-btn.next");
-
-    let current = 0;
-
-    function showBanner(index) {
-      banners.forEach(b => b.classList.remove("active"));
-      banners[index].classList.add("active");
-    }
-
-    function nextBanner() {
-      current = (current + 1) % banners.length;
-      showBanner(current);
-    }
-
-    function prevBanner() {
-      current = (current - 1 + banners.length) % banners.length;
-      showBanner(current);
-    }
-
-    nextBtn.addEventListener("click", nextBanner);
-    prevBtn.addEventListener("click", prevBanner);
-
-    // Auto slide ทุก 6 วินาที
-    setInterval(nextBanner, 6000);
-  </script>
+  <script src="js/navbar-loader.js"></script>
 
   <!-- ===== Backend API Client ===== -->
   <script src="js/api-config.js"></script>
   <script src="js/api.js"></script>
 
-  <!-- ===== โหลดการ์ดผ่าน Backend API ===== -->
-  <script>
-    const fallbackCardImage = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400";
-
-    function clearElement(element) {
-      element.replaceChildren();
-    }
-
-    function createBackendNotice(title, message) {
-      const notice = document.createElement("div");
-      notice.className = "backend-required";
-
-      const heading = document.createElement("h3");
-      heading.textContent = title;
-
-      const text = document.createElement("p");
-      text.textContent = message;
-
-      notice.append(heading, text);
-      return notice;
-    }
-
-    function setSafeImage(img, src, alt, fallbackSrc) {
-      const finalFallback = fallbackSrc || fallbackCardImage;
-      img.alt = alt || "";
-      img.src = getSafeImageUrl(src, finalFallback);
-      img.addEventListener("error", () => {
-        if (img.src !== finalFallback) {
-          img.src = finalFallback;
-        }
-      }, { once: true });
-    }
-
-    function getSafeImageUrl(src, fallbackSrc) {
-      if (!src) return fallbackSrc;
-
-      try {
-        const url = new URL(src, window.location.href);
-        if (url.protocol === "http:" || url.protocol === "https:") {
-          return url.href;
-        }
-      } catch (err) {
-        console.warn("Invalid image URL:", err);
-      }
-
-      return fallbackSrc;
-    }
-
-    function getCardDetailUrl(card) {
-      if (card.slug) {
-        return `card-detail.html?slug=${encodeURIComponent(card.slug)}`;
-      }
-
-      return `card-detail.html?id=${encodeURIComponent(card.id)}`;
-    }
-
-    function renderDynamicCard(card) {
-      const detailUrl = getCardDetailUrl(card);
-
-      const item = document.createElement("div");
-      item.className = "image-card";
-      item.tabIndex = 0;
-      item.setAttribute("role", "link");
-
-      const openDetail = () => {
-        window.location.href = detailUrl;
-      };
-
-      item.addEventListener("click", openDetail);
-      item.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openDetail();
-        }
-      });
-
-      const img = document.createElement("img");
-      setSafeImage(img, card.imageUrl, card.title, fallbackCardImage);
-
-      const body = document.createElement("div");
-      body.className = "image-card-body";
-
-      const title = document.createElement("h3");
-      title.textContent = card.title || "ไม่มีหัวข้อ";
-
-      const description = document.createElement("p");
-      description.textContent = card.subtitle || card.description || "";
-
-      body.append(title, description);
-      item.append(img, body);
-      return item;
-    }
-
-    async function loadDynamicCards() {
-      const container = document.getElementById("dynamic-cards");
-
-      try {
-        const cards = await window.apiClient.cards.list();
-
-        if (cards.length === 0) {
-          clearElement(container);
-          container.append(createBackendNotice(
-            "ยังไม่มีข้อมูล cards จาก Backend",
-            "เมื่อเพิ่มข้อมูลผ่าน Backend แล้ว การ์ดจะแสดงในส่วนนี้"
-          ));
-          return;
-        }
-
-        clearElement(container);
-
-        cards.forEach(card => {
-          container.append(renderDynamicCard(card));
-        });
-
-      } catch (err) {
-        console.error("Error loading cards:", err);
-        clearElement(container);
-        container.append(createBackendNotice(
-          "ยังไม่สามารถเชื่อมต่อ Backend ได้",
-          "กรุณารัน backend ก่อน จึงจะดึง cards มาแสดงได้"
-        ));
-      }
-    }
-
-    // โหลดเมื่อหน้าพร้อม
-    document.addEventListener("DOMContentLoaded", loadDynamicCards);
-  </script>
+  <script src="js/constants.js"></script>
+  <script src="js/ui-utils.js"></script>
+  <script src="js/action-effects.js"></script>
+  <script src="js/home.js"></script>
 
 </body>
 

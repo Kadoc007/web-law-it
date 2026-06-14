@@ -2,6 +2,8 @@ import express from "express";
 import { db } from "../firebaseAdmin.js";
 import { adminAuth } from "../middleware/adminAuth.js";
 import { handleRouteError } from "../utils/http.js";
+import { sortLawsBySection } from "../utils/lawSort.js";
+import { listLawCategoryConfigs } from "../config/lawCategoryConfig.js";
 import {
   sanitizeLawRecord,
   validateCategory,
@@ -10,6 +12,10 @@ import {
 } from "../utils/validation.js";
 
 const router = express.Router();
+
+router.get("/config/categories", (req, res) => {
+  res.json(listLawCategoryConfigs());
+});
 
 /**
  * GET /api/laws/:category
@@ -23,13 +29,12 @@ router.get("/:category", async (req, res) => {
       .collection("law")
       .doc(category)
       .collection("items")
-      .orderBy("section")
       .get();
 
-    const laws = snapshot.docs.map((doc) => ({
+    const laws = sortLawsBySection(snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...sanitizeLawRecord(doc.data()),
-    }));
+      ...sanitizeLawRecord(doc.data(), category),
+    })));
 
     res.json(laws);
   } catch (err) {
@@ -60,7 +65,7 @@ router.get("/:category/:id", async (req, res) => {
 
     res.json({
       id: docSnap.id,
-      ...sanitizeLawRecord(docSnap.data()),
+      ...sanitizeLawRecord(docSnap.data(), category),
     });
   } catch (err) {
     handleRouteError(res, err, "LawRoutes:get");

@@ -1,8 +1,9 @@
 import admin from "firebase-admin";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 
 // โหลด environment variables จากไฟล์ .env
-dotenv.config();
+dotenv.config({ path: fileURLToPath(new URL(".env", import.meta.url)) });
 
 // ตรวจสอบ environment variables ที่จำเป็น
 const requiredEnvVars = [
@@ -19,7 +20,7 @@ if (missingVars.length > 0) {
   console.error(
     "[Firebase Admin] กรุณาสร้างไฟล์ .env ตาม .env.example"
   );
-  process.exit(1);
+  throw new Error(`Missing Firebase Admin environment variables: ${missingVars.join(", ")}`);
 }
 
 // Initialize Firebase Admin ด้วย environment variables

@@ -1,7 +1,7 @@
 # Backend API Contract
 
-Phase 1 scope: make the backend the single planned gateway for Firestore reads and writes.
-Frontend pages should migrate from `db.collection(...)` to the endpoints below in later phases.
+Current scope: the backend is the single gateway for Firestore reads and writes.
+Frontend public/admin pages should use `window.apiClient` instead of direct Firestore reads or writes.
 
 ## Base URL
 
@@ -30,15 +30,37 @@ The backend validates this token with `adminAuth`.
 
 ## Laws
 
+### GET `/api/laws/config/categories`
+
+Returns the active law category config used by admin and public viewers.
+
+Response:
+
+```json
+[
+  {
+    "id": "computer",
+    "label": "กฎหมายคอมพิวเตอร์",
+    "viewerLabel": "กฎหมายคอมพิวเตอร์",
+    "fields": ["section", "title", "description", "penalty"],
+    "requiredFields": ["section", "title", "description"],
+    "hiddenFields": []
+  }
+]
+```
+
 ### GET `/api/laws/:category`
 
 Returns all law items for one category, ordered by `section`.
 
-Allowed categories planned for validation in the hardening phase:
+Active categories are config-backed:
 
 - `computer`
 - `privacy`
 - `copyright`
+- `eft`
+- `etl`
+- `eta`
 
 Response:
 
@@ -62,7 +84,7 @@ Returns one law item.
 
 Admin only. Creates a law item.
 
-Required body:
+Body:
 
 ```json
 {
@@ -73,7 +95,7 @@ Required body:
 }
 ```
 
-`penalty` is optional only for `privacy`.
+`section`, `title`, and `description` are required. `penalty` is optional for every active category.
 
 ### PUT `/api/laws/:category/:id`
 
@@ -115,6 +137,8 @@ Response:
 ### GET `/api/cards/slug/:slug`
 
 Returns one card by slug. This supports the existing `card-detail.html?slug=...` flow.
+
+The admin UI no longer exposes slug editing. This endpoint remains for legacy cards, static links, and API-created records that already have a slug.
 
 ### GET `/api/cards/:id`
 
@@ -164,11 +188,12 @@ Admin only. Deletes one card.
 
 The backend now validates and normalizes request data before writing to Firestore.
 
-- Law categories are allowlisted to `computer`, `privacy`, and `copyright`.
+- Law categories are allowlisted to `computer`, `privacy`, `copyright`, `eft`, `etl`, and `eta`.
 - Card categories are allowlisted to empty, `help`, `article`, and `resource`.
 - Firestore document ids accepted by the API must use letters, numbers, `_`, or `-`.
 - Card `imageUrl` must be `http` or `https`.
 - Card `slug` is normalized to lowercase and allows letters, numbers, `_`, and `-`.
+- Frontend admin no longer sends `slug`; new admin-created cards rely on Firestore document `id` links.
 - Card `pageContent` is sanitized with a conservative HTML allowlist before storage.
 - Card and law read responses are sanitized before returning JSON, including existing Firestore data.
 - Unknown server errors return a generic message; details stay in server logs.

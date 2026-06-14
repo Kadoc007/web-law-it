@@ -75,7 +75,7 @@ Admin can:
 - View existing laws and cards.
 - Create, edit, and delete laws.
 - Create, edit, and delete cards.
-- Add card metadata such as title, subtitle, description, image URL, slug, category, and page content.
+- Add card metadata such as title, subtitle, description, image URL, category, and page content.
 
 ## 5. Key Routes and Pages
 
@@ -121,10 +121,11 @@ Admin can:
 - `/index.html?category=privacy` displays title for PDPA.
 - `/index.html?category=copyright` displays title for copyright law.
 - `/index.html` without `category` redirects to `/home.html`.
+- Law category page titles and visible fields are driven by `GET /api/laws/config/categories`.
 - Laws are fetched from `GET /api/laws/{category}`.
 - If backend is not running, no law cards render and a backend-required message is shown.
 - If backend returns an empty array, an empty-state message is shown.
-- If backend returns laws, each law card displays section, title, description, and optional penalty.
+- If backend returns laws, each law card displays configured fields: section, title, description, and optional penalty.
 - Law fields must be rendered as text, not executable HTML.
 
 ### F3. Card Detail Page
@@ -178,10 +179,11 @@ Admin can:
 **Acceptance criteria:**
 
 - Admin can select law category.
+- Admin law fields are driven by backend category config with a local fallback.
 - Laws list loads from `GET /api/laws/{category}`.
 - Admin can create law with required section, title, and description.
-- Admin can create penalty for non-privacy categories.
-- Penalty field is hidden/cleared for privacy category.
+- Admin can create optional penalty for any active law category.
+- Penalty is not required for any active law category.
 - Admin can edit existing law.
 - Admin can delete existing law after confirmation.
 - Create/update/delete calls must fail without token.
@@ -195,7 +197,8 @@ Admin can:
 
 - Admin can view card list from `GET /api/cards`.
 - Admin can create card with required title.
-- Admin can provide subtitle, description, image URL, slug, category, and page content.
+- Admin can provide subtitle, description, image URL, category, and page content.
+- Admin card form does not expose slug; newly created cards open by Firestore document ID.
 - Admin can edit existing card.
 - Admin can delete existing card after confirmation.
 - Image preview only uses safe URLs.
@@ -214,6 +217,7 @@ Admin can:
 - `POST /api/cards` requires admin auth.
 - `PUT /api/cards/:id` requires admin auth.
 - `DELETE /api/cards/:id` requires admin auth.
+- `GET /api/laws/config/categories` returns active law category config.
 - `GET /api/laws/:category` returns array of laws.
 - `GET /api/laws/:category/:id` returns one law or 404.
 - `POST /api/laws/:category` requires admin auth.
@@ -296,6 +300,7 @@ Expected result:
 | GET | `/api/cards` | Returns cards array |
 | GET | `/api/cards/:id` | Returns one card or 404 |
 | GET | `/api/cards/slug/:slug` | Returns one card or 404 |
+| GET | `/api/laws/config/categories` | Returns active law category config |
 | GET | `/api/laws/:category` | Returns laws array |
 | GET | `/api/laws/:category/:id` | Returns one law or 404 |
 
@@ -319,6 +324,7 @@ Expected result:
 - Home dynamic cards render only when backend returns cards.
 - Home shows backend-required message when backend is unavailable.
 - Law category page redirects to home when no category is provided.
+- Law category page loads category config and uses `viewerLabel` for the page title.
 - Law category page shows backend-required message when backend is unavailable.
 - Law category page renders laws returned by backend.
 - Card detail page loads by slug.
@@ -448,6 +454,7 @@ Admin password: <provide in TestSprite secure credentials>
 - Legal advice correctness verification.
 - Payment or subscription flows.
 - Multi-language content beyond current Thai UI.
+- PDF layout or document viewer features for law pages.
 - Real LINE chatbot conversation testing after leaving the website.
 - Firebase Console configuration automation.
 

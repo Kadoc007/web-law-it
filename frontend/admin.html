@@ -4,10 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel</title>
+  <title>Admin Dashboard</title>
 
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/bootstrap-custom.css">
   <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/action-effects.css">
 </head>
 
 <body>
@@ -18,121 +23,176 @@
   <!-- 🔥 Page Content -->
   <main class="page-content">
 
-    <div class="container">
+    <div class="container page-shell admin-shell">
 
-      <h1>🛠 Admin Panel</h1>
+      <section class="admin-hero">
+        <div>
+          <p class="admin-kicker">IT LAW CENTER</p>
+          <h1>Admin Dashboard</h1>
+          <p class="admin-hero-copy">จัดการข้อมูลกฎหมายและการ์ดหน้าเว็บจากที่เดียว พร้อมแยกพื้นที่ฟอร์มและรายการให้ตรวจทานง่ายขึ้น</p>
+        </div>
+        <div class="admin-hero-status">
+          <span class="status-dot"></span>
+          Backend required
+        </div>
+      </section>
 
       <!-- 🔐 Login -->
-      <div id="login-box" class="card">
-        <h2>เข้าสู่ระบบ</h2>
-        <p class="warning">*เฉพาะผู้ดูแลระบบเท่านั้น</p>
+      <div id="login-box" class="admin-login surface-card">
+        <div class="login-copy">
+          <p class="section-kicker">Secure access</p>
+          <h2>เข้าสู่ระบบผู้ดูแล</h2>
+          <p class="warning">*เฉพาะผู้ดูแลระบบเท่านั้น</p>
+        </div>
 
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
+        <div class="login-form">
+          <label for="email">อีเมล</label>
+          <input type="email" id="email" class="form-control" placeholder="admin@example.com" autocomplete="username">
 
-        <button class="primary" onclick="login()">Login</button>
+          <label for="password">รหัสผ่าน</label>
+          <input type="password" id="password" class="form-control" placeholder="Password" autocomplete="current-password">
+
+          <button id="loginBtn" class="btn btn-primary primary" type="button">เข้าสู่ระบบ</button>
+        </div>
       </div>
 
       <!-- 🔒 Admin Panel -->
-      <div id="admin-panel" class="card" style="display:none">
+      <div id="admin-panel" class="admin-panel" style="display:none">
 
-        <div class="top-bar">
-          <span>👤 ผู้ดูแลระบบ</span>
-          <button class="danger" onclick="logout()">Logout</button>
+        <div class="top-bar surface-card">
+          <div>
+            <span>ผู้ดูแลระบบ</span>
+            <p>พื้นที่จัดการข้อมูลที่เชื่อมกับ Backend API</p>
+          </div>
+          <button id="logoutBtn" class="btn btn-danger danger" type="button">Logout</button>
         </div>
 
         <!-- ===== Tabs ===== -->
-        <div class="admin-tabs">
-          <button class="tab-btn active" onclick="showTab('laws')">📚 จัดการกฎหมาย</button>
-          <button class="tab-btn" onclick="showTab('cards')">🎴 จัดการการ์ด</button>
+        <div class="admin-tabs nav nav-pills" role="tablist" aria-label="Admin content sections">
+          <button class="btn nav-link tab-btn active" type="button" data-admin-tab="laws" role="tab" aria-controls="tab-laws" aria-selected="true">จัดการกฎหมาย</button>
+          <button class="btn nav-link tab-btn" type="button" data-admin-tab="cards" role="tab" aria-controls="tab-cards" aria-selected="false">จัดการการ์ด</button>
         </div>
 
         <!-- ===== Tab: กฎหมาย ===== -->
-        <div id="tab-laws" class="tab-content active">
-          <h2>จัดการข้อมูลกฎหมาย</h2>
+        <div id="tab-laws" class="tab-content active" role="tabpanel">
+          <div class="admin-workspace-grid">
+            <section class="workspace-panel workspace-form surface-card">
+              <div class="section-header">
+                <p class="section-kicker">Law editor</p>
+                <h2>จัดการข้อมูลกฎหมาย</h2>
+                <p>เลือกหมวด แล้วกรอก field ที่ระบบกำหนดไว้ใน config</p>
+              </div>
 
-          <label>หมวดกฎหมาย</label>
-          <select id="category" onchange="loadAdminLaws()">
-            <option value="computer">กฎหมายคอมพิวเตอร์</option>
-            <option value="privacy">กฎหมายคุ้มครองข้อมูลส่วนบุคคล</option>
-            <option value="copyright">กฎหมายลิขสิทธิ์</option>
-            <option value="copyright">กฎหมายธุรกรรมดิจิทัล</option>
-          </select>
+              <div class="form-group">
+                <label for="category">หมวดกฎหมาย</label>
+                <select id="category" class="form-select">
+                  <option value="computer">กฎหมายคอมพิวเตอร์</option>
+                  <option value="privacy">กฎหมายคุ้มครองข้อมูลส่วนบุคคล</option>
+                  <option value="copyright">กฎหมายเกี่ยวกับการพัฒนาโครงสร้างพื้นฐานสารสนเทศให้ทั่วถึง และเท่าเทียมกัน</option>
+                  <option value="eft">กฎหมายเกี่ยวกับการโอนเงินทางอิเล็กทรอนิกส์</option>
+                  <option value="etl">กฎหมายเกี่ยวกับลายมือชื่ออิเล็กทรอนิกส์</option>
+                  <option value="eta">กฎหมายเกี่ยวกับธุรกรรมทางอิเล็กทรอนิกส์</option>
+                </select>
+              </div>
 
-          <input id="section" placeholder="มาตรา">
-          <input id="title" placeholder="หัวข้อ">
-          <textarea id="description" placeholder="รายละเอียด"></textarea>
+              <div id="law-fields" class="law-fields"></div>
 
-          <!-- ซ่อน / แสดงโทษได้ตามหมวด -->
-          <div id="penalty-box">
-            <input id="penalty" placeholder="โทษ">
+              <div class="form-actions">
+                <button id="saveBtn" class="btn btn-primary primary" type="button">เพิ่มข้อมูล</button>
+                <button id="cancelLawBtn" class="btn btn-secondary secondary" type="button" style="display:none">ยกเลิก</button>
+              </div>
+            </section>
+
+            <section class="workspace-panel workspace-list surface-card">
+              <div class="section-header">
+                <p class="section-kicker">Current records</p>
+                <h2>รายการกฎหมาย</h2>
+                <p>รายการจะเปลี่ยนตามหมวดที่เลือกด้านซ้าย</p>
+              </div>
+
+              <div id="admin-laws" class="admin-list"></div>
+            </section>
           </div>
-
-          <button id="saveBtn" class="primary" onclick="saveLaw()">เพิ่มข้อมูล</button>
-
-          <hr>
-
-          <div id="admin-laws"></div>
         </div>
 
         <!-- ===== Tab: การ์ด ===== -->
-        <div id="tab-cards" class="tab-content">
-          <h2>🎴 จัดการการ์ด</h2>
-          <p class="hint">* ช่องที่ไม่มีข้อมูลสามารถเว้นว่างได้ ยกเว้นหัวข้อ</p>
+        <div id="tab-cards" class="tab-content" role="tabpanel" hidden>
+          <div class="admin-workspace-grid">
+            <section class="workspace-panel workspace-form surface-card">
+              <div class="section-header">
+                <p class="section-kicker">Card editor</p>
+                <h2>จัดการการ์ด</h2>
+                <p class="hint">* ช่องที่ไม่มีข้อมูลสามารถเว้นว่างได้ ยกเว้นหัวข้อ</p>
+              </div>
 
-          <div class="form-group">
-            <label>หัวข้อ (บังคับ) <span class="required">*</span></label>
-            <input id="card-title" placeholder="เช่น ศูนย์รับปรึกษากฎหมาย">
+              <div class="card-form-grid">
+                <div class="form-group">
+                  <label for="card-title">หัวข้อ (บังคับ) <span class="required">*</span></label>
+                  <input id="card-title" class="form-control" placeholder="เช่น ศูนย์รับปรึกษากฎหมาย">
+                </div>
+
+                <div class="form-group">
+                  <label for="card-subtitle">หัวข้อย่อย</label>
+                  <input id="card-subtitle" class="form-control" placeholder="เช่น บริการฟรี 24 ชั่วโมง">
+                </div>
+
+                <div class="form-group form-group-wide">
+                  <label for="card-description">รายละเอียด</label>
+                  <textarea id="card-description" class="form-control" placeholder="คำอธิบายสั้นๆ เกี่ยวกับการ์ด"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="card-imageUrl">URL รูปภาพ</label>
+                  <input id="card-imageUrl" class="form-control" placeholder="https://example.com/image.jpg">
+                  <div id="image-preview" class="image-preview"></div>
+                </div>
+
+                <div class="form-group">
+                  <label for="card-category">หมวดหมู่</label>
+                  <select id="card-category" class="form-select">
+                    <option value="">-- ไม่ระบุ --</option>
+                    <option value="help">ศูนย์ช่วยเหลือ</option>
+                    <option value="article">บทความ</option>
+                    <option value="resource">แหล่งข้อมูล</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-group-wide">
+                  <label for="card-pageContent">เนื้อหาหน้า</label>
+                  <div class="article-format-panel" aria-label="เครื่องมือจัดรูปแบบบทความ">
+                    <div>
+                      <p class="article-format-title">รูปแบบบทความมาตรฐาน</p>
+                      <p class="hint">ใช้หัวข้อ ย่อหน้า รายการ และตัวหนา เพื่อให้หน้าการ์ดอ่านเป็นระบบเดียวกัน</p>
+                    </div>
+                    <div class="article-format-actions">
+                      <button id="insertArticleTemplateBtn" class="btn btn-secondary secondary btn-sm" type="button">ใช้เทมเพลต</button>
+                      <button id="insertArticleHeadingBtn" class="btn btn-outline-primary btn-sm" type="button">หัวข้อ</button>
+                      <button id="insertArticleSubheadingBtn" class="btn btn-outline-primary btn-sm" type="button">หัวข้อย่อย</button>
+                      <button id="insertArticleBoldBtn" class="btn btn-outline-primary btn-sm" type="button">ตัวหนา</button>
+                    </div>
+                  </div>
+                  <textarea id="card-pageContent" class="form-control" placeholder="เนื้อหาที่จะแสดงเมื่อคลิกการ์ด"
+                    rows="8"></textarea>
+                  <p class="hint">รองรับ HTML พื้นฐาน เช่น &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt; และระบบจะ sanitize ก่อนแสดงผล</p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button id="saveCardBtn" class="btn btn-primary primary" type="button">เพิ่มการ์ด</button>
+                <button id="cancelCardBtn" class="btn btn-secondary secondary" type="button" style="display:none">ยกเลิก</button>
+              </div>
+            </section>
+
+            <section class="workspace-panel workspace-list surface-card">
+              <div class="section-header">
+                <p class="section-kicker">Published cards</p>
+                <h2>รายการการ์ดทั้งหมด</h2>
+                <p>แก้ไขหรือลบการ์ดที่แสดงบนหน้า Home</p>
+              </div>
+
+              <div id="admin-cards" class="cards-list admin-list"></div>
+            </section>
           </div>
-
-          <div class="form-group">
-            <label>หัวข้อย่อย</label>
-            <input id="card-subtitle" placeholder="เช่น บริการฟรี 24 ชั่วโมง">
-          </div>
-
-          <div class="form-group">
-            <label>รายละเอียด</label>
-            <textarea id="card-description" placeholder="คำอธิบายสั้นๆ เกี่ยวกับการ์ด"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>URL รูปภาพ</label>
-            <input id="card-imageUrl" placeholder="https://example.com/image.jpg">
-            <div id="image-preview" class="image-preview"></div>
-          </div>
-
-          <div class="form-group">
-            <label>Slug (สำหรับ URL)</label>
-            <input id="card-slug" placeholder="เช่น consult-center">
-            <p class="hint">ใช้สำหรับสร้าง URL เช่น card-detail.html?slug=consult-center</p>
-          </div>
-
-          <div class="form-group">
-            <label>หมวดหมู่</label>
-            <select id="card-category">
-              <option value="">-- ไม่ระบุ --</option>
-              <option value="help">ศูนย์ช่วยเหลือ</option>
-              <option value="article">บทความ</option>
-              <option value="resource">แหล่งข้อมูล</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>เนื้อหาหน้า</label>
-            <textarea id="card-pageContent" placeholder="เนื้อหาที่จะแสดงเมื่อคลิกการ์ด"
-              rows="8"></textarea>
-            <p class="hint">ระบบจะแสดงเป็นข้อความปลอดภัย ไม่ประมวลผล HTML</p>
-          </div>
-
-          <div class="form-actions">
-            <button id="saveCardBtn" class="primary" onclick="saveCard()">➕ เพิ่มการ์ด</button>
-            <button id="cancelCardBtn" class="secondary" onclick="resetCardForm()" style="display:none">ยกเลิก</button>
-          </div>
-
-          <hr>
-
-          <h3>รายการการ์ดทั้งหมด</h3>
-          <div id="admin-cards" class="cards-list"></div>
         </div>
 
       </div>
@@ -141,14 +201,7 @@
 
   </main>
 
-  <!-- โหลด Navbar -->
-  <script>
-    fetch("components/navbar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("navbar").innerHTML = html;
-      });
-  </script>
+  <script src="js/navbar-loader.js"></script>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -156,6 +209,9 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/api-config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/ui-utils.js"></script>
+  <script src="js/action-effects.js"></script>
   <script src="js/admin.js"></script>
 
 </body>

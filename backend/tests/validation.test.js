@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  LAW_CATEGORY_CONFIG,
+  listLawCategoryConfigs,
+} from "../config/lawCategoryConfig.js";
+import {
   sanitizeCardRecord,
   sanitizeHtml,
   sanitizeLawRecord,
@@ -10,8 +14,25 @@ import {
   validateLawInput,
   validateSlugParam,
 } from "../utils/validation.js";
+import { sortLawsBySection } from "../utils/lawSort.js";
 
-test("validateCategory allows known law categories only", () => {
+test("law category config has unique active ids", () => {
+  const categories = listLawCategoryConfigs();
+  const ids = categories.map((category) => category.id);
+
+  assert.deepEqual(ids, Object.keys(LAW_CATEGORY_CONFIG));
+  assert.equal(new Set(ids).size, ids.length);
+  categories.forEach((category) => {
+    assert.equal(typeof category.viewerLabel, "string");
+    assert.ok(category.viewerLabel.length > 0);
+  });
+});
+
+test("validateCategory allows configured law categories only", () => {
+  listLawCategoryConfigs().forEach((category) => {
+    assert.equal(validateCategory(category.id), category.id);
+  });
+
   assert.equal(validateCategory("computer"), "computer");
   assert.throws(() => validateCategory("unknown"), /หมวดหมู่ไม่ถูกต้อง/);
 });
@@ -21,7 +42,32 @@ test("validateDocId rejects path-like values", () => {
   assert.throws(() => validateDocId("../secret"), /id ไม่ถูกต้อง/);
 });
 
-test("validateLawInput trims fields and requires penalty outside privacy", () => {
+test("law category config keeps penalty optional for active categories", () => {
+  listLawCategoryConfigs().forEach((category) => {
+    assert.ok(category.fields.includes("penalty"));
+    assert.equal(category.requiredFields.includes("penalty"), false);
+  });
+});
+
+test("sortLawsBySection sorts numeric law sections in ascending order", () => {
+  const laws = [
+    { section: "มาตรา 10" },
+    { section: "มาตรา 2" },
+    { section: "มาตรา 1" },
+    { section: "มาตรา 2/1" },
+    { section: "มาตรา ๓" },
+  ];
+
+  assert.deepEqual(sortLawsBySection(laws).map((law) => law.section), [
+    "มาตรา 1",
+    "มาตรา 2",
+    "มาตรา 2/1",
+    "มาตรา ๓",
+    "มาตรา 10",
+  ]);
+});
+
+test("validateLawInput trims fields and keeps penalty optional", () => {
   assert.deepEqual(validateLawInput("privacy", {
     section: " 1 ",
     title: " หัวข้อ ",
@@ -30,13 +76,31 @@ test("validateLawInput trims fields and requires penalty outside privacy", () =>
     section: "1",
     title: "หัวข้อ",
     description: "รายละเอียด",
+    penalty: "",
   });
 
-  assert.throws(() => validateLawInput("computer", {
-    section: "1",
-    title: "หัวข้อ",
-    description: "รายละเอียด",
-  }), /กรุณากรอก โทษ/);
+  assert.deepEqual(validateLawInput("computer", {
+    section: " 2 ",
+    title: " Topic ",
+    description: " Detail ",
+    penalty: " Fine ",
+  }), {
+    section: "2",
+    title: "Topic",
+    description: "Detail",
+    penalty: "Fine",
+  });
+
+  assert.deepEqual(validateLawInput("copyright", {
+    section: "3",
+    title: "Topic",
+    description: "Detail",
+  }), {
+    section: "3",
+    title: "Topic",
+    description: "Detail",
+    penalty: "",
+  });
 });
 
 test("validateCardInput normalizes safe values", () => {

@@ -1,12 +1,7 @@
 // card-detail.js - แสดงรายละเอียดการ์ดผ่าน Backend API
 
-const categoryLabels = {
-  help: "ศูนย์ช่วยเหลือ",
-  article: "บทความ",
-  resource: "แหล่งข้อมูล"
-};
-
-const fallbackHeroImage = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=900";
+const detailUi = window.uiUtils;
+const fallbackHeroImage = window.appConstants.images.heroFallback;
 const safeContentTags = new Set([
   "a",
   "b",
@@ -60,51 +55,6 @@ function getUrlParams() {
   };
 }
 
-function setImageWithFallback(img, src, alt, fallbackSrc) {
-  img.alt = alt || "";
-  img.src = getSafeImageUrl(src, fallbackSrc);
-  img.addEventListener("error", () => {
-    if (img.src !== fallbackSrc) {
-      img.src = fallbackSrc;
-    }
-  }, { once: true });
-}
-
-function getSafeImageUrl(src, fallbackSrc) {
-  if (!src) return fallbackSrc;
-
-  try {
-    const url = new URL(src, window.location.href);
-    if (url.protocol === "http:" || url.protocol === "https:") {
-      return url.href;
-    }
-  } catch (err) {
-    console.warn("Invalid image URL:", err);
-  }
-
-  return fallbackSrc;
-}
-
-function getSafeLinkUrl(href) {
-  if (!href) return "";
-
-  try {
-    const url = new URL(href, window.location.href);
-    if (
-      url.protocol === "http:" ||
-      url.protocol === "https:" ||
-      url.protocol === "mailto:" ||
-      url.protocol === "tel:"
-    ) {
-      return url.href;
-    }
-  } catch (err) {
-    console.warn("Invalid link URL:", err);
-  }
-
-  return "";
-}
-
 function hasHtmlMarkup(text) {
   return /<\/?[a-z][\s\S]*>/i.test(text);
 }
@@ -114,8 +64,7 @@ function renderPlainTextContent(container, content) {
 
   if (!text) {
     const empty = document.createElement("p");
-    empty.style.color = "#888";
-    empty.style.textAlign = "center";
+    empty.className = "card-empty-state";
     empty.textContent = "ไม่มีเนื้อหาเพิ่มเติม";
     container.appendChild(empty);
     return;
@@ -168,7 +117,7 @@ function sanitizeContentNode(node) {
   copySafeClassName(node, element);
 
   if (tagName === "a") {
-    const safeHref = getSafeLinkUrl(node.getAttribute("href"));
+    const safeHref = detailUi.getSafeLinkUrl(node.getAttribute("href"));
     if (safeHref) {
       element.href = safeHref;
       element.target = "_blank";
@@ -177,7 +126,7 @@ function sanitizeContentNode(node) {
   }
 
   if (tagName === "img") {
-    const safeSrc = getSafeImageUrl(node.getAttribute("src"), "");
+    const safeSrc = detailUi.getSafeImageUrl(node.getAttribute("src"), "");
     if (!safeSrc) {
       return fragment;
     }
@@ -185,6 +134,7 @@ function sanitizeContentNode(node) {
     element.src = safeSrc;
     element.alt = node.getAttribute("alt") || "";
     element.loading = "lazy";
+    element.decoding = "async";
   }
 
   node.childNodes.forEach((child) => {
@@ -243,7 +193,9 @@ function displayCard(card) {
 
   const heroImage = document.getElementById("card-image");
   if (heroImage) {
-    setImageWithFallback(heroImage, card.imageUrl, card.title, fallbackHeroImage);
+    heroImage.decoding = "async";
+    heroImage.fetchPriority = "high";
+    detailUi.setImageWithFallback(heroImage, card.imageUrl, card.title, fallbackHeroImage);
   }
 
   const titleEl = document.getElementById("card-title");
@@ -261,8 +213,8 @@ function displayCard(card) {
 
   const categoryBadge = document.getElementById("card-category-badge");
   if (categoryBadge) {
-    if (card.category && categoryLabels[card.category]) {
-      categoryBadge.textContent = categoryLabels[card.category];
+    if (card.category && detailUi.hasCardCategoryLabel(card.category)) {
+      categoryBadge.textContent = detailUi.getCardCategoryLabel(card.category);
       categoryBadge.style.display = "inline-block";
     } else {
       categoryBadge.style.display = "none";
@@ -303,8 +255,7 @@ function showError(message) {
 
   const link = document.createElement("a");
   link.href = "home.html";
-  link.className = "back-btn";
-  link.style.marginTop = "20px";
+  link.className = "btn btn-primary back-btn";
   link.textContent = "กลับหน้าแรก";
 
   wrapper.append(heading, text, link);

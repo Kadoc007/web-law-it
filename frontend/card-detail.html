@@ -6,9 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รายละเอียด</title>
 
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/bootstrap-custom.css">
     <link rel="stylesheet" href="css/card-detail.css">
     <link rel="stylesheet" href="css/line-button.css">
+    <link rel="stylesheet" href="css/action-effects.css">
 </head>
 
 <body>
@@ -19,20 +23,20 @@
     <!-- ===== Main Content ===== -->
     <main class="page-content">
 
-        <div class="container">
+        <div class="container page-shell detail-shell">
 
             <!-- Hero Section -->
             <div id="card-hero" class="card-hero">
                 <img id="card-image" class="card-hero-image" src="" alt="">
                 <div class="card-hero-overlay">
-                    <h1 id="card-title">กำลังโหลด...</h1>
+                    <h1 id="card-title" class="text-thai-readable">กำลังโหลด...</h1>
                     <p id="card-subtitle" class="card-subtitle"></p>
                     <span id="card-category-badge" class="category-badge"></span>
                 </div>
             </div>
 
             <!-- Content Section -->
-            <div class="card-body">
+            <div class="card-body surface-card">
 
                 <!-- Description -->
                 <div id="card-description" class="card-description"></div>
@@ -44,7 +48,7 @@
 
             <!-- Back Button -->
             <div class="back-section">
-                <a href="home.html" class="back-btn">← กลับหน้าแรก</a>
+                <a href="home.html" class="btn btn-primary back-btn">← กลับหน้าแรก</a>
             </div>
 
         </div>
@@ -52,34 +56,18 @@
     </main>
 
     <!-- ===== LINE Contact Floating Button ===== -->
-    <a href="https://line.me/R/ti/p/@640smsos" class="line-float" target="_blank" rel="noopener noreferrer" title="มีคำถาม แอดเลย">
-        <img src="https://i.pinimg.com/736x/b2/22/db/b222dbc287cbf2b0100bddb6e5991a08.jpg" alt="Add LINE">
+    <a href="https://line.me/R/ti/p/@640smsos" class="line-float" target="_blank" rel="noopener noreferrer" title="มีคำถาม แอดเลย" aria-label="มีคำถาม แอด LINE">
         <span>มีคำถาม<br>แอดเลย</span>
     </a>
-    <script>
-        const lineBtn = document.querySelector(".line-float");
-        if (lineBtn) {
-            setInterval(() => {
-                lineBtn.classList.add("wiggle");
-                setTimeout(() => {
-                    lineBtn.classList.remove("wiggle");
-                }, 900);
-            }, 5000);
-        }
-    </script>
-
-    <!-- โหลด Navbar -->
-    <script>
-        fetch("components/navbar.html")
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById("navbar").innerHTML = html;
-            });
-    </script>
+    <script src="js/line-float.js"></script>
+    <script src="js/navbar-loader.js"></script>
 
     <!-- Backend API Client -->
     <script src="js/api-config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/ui-utils.js"></script>
+    <script src="js/action-effects.js"></script>
     <script src="js/card-detail.js"></script>
 
 </body>

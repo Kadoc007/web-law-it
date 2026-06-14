@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 package-lock.json
+dist/
 
 # Environment and secrets
 .env
@@ -26,3 +27,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Visual QA browser profiles
+visual-qa-screenshots/
+visual-qa-screenshots/chrome-profile*/
+visual-qa-screenshots/edge-profile*/

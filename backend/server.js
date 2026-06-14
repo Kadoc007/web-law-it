@@ -3,15 +3,18 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 import lawRoutes from "./routes/lawRoutes.js";
 import cardRoutes from "./routes/cardRoutes.js";
 
 // โหลด environment variables
-dotenv.config();
+dotenv.config({ path: fileURLToPath(new URL(".env", import.meta.url)) });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
+const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
 
 // === Security Middleware ===
 
@@ -24,9 +27,13 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .map((origin) => origin.trim())
   .filter((origin) => origin.length > 0);
 
+if (vercelOrigin) {
+  allowedOrigins.push(vercelOrigin);
+}
+
 if (isProduction && allowedOrigins.length === 0) {
   console.error("[CORS] production ต้องตั้งค่า ALLOWED_ORIGINS ก่อนเริ่ม server");
-  process.exit(1);
+  throw new Error("ALLOWED_ORIGINS is required in production");
 }
 
 app.use(
@@ -68,8 +75,14 @@ app.use(express.json({ limit: "10kb" })); // จำกัดขนาด body �
 // === Routes ===
 app.use("/api/laws", lawRoutes);
 app.use("/api/cards", cardRoutes);
+app.use("/laws", lawRoutes);
+app.use("/cards", cardRoutes);
 
 app.get("/", (req, res) => {
+  res.send("Computer Law API is running");
+});
+
+app.get("/api", (req, res) => {
   res.send("Computer Law API is running");
 });
 
@@ -79,7 +92,16 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ message: "เกิดข้อผิดพลาดภายในระบบ" });
 });
 
+function isDirectRun() {
+  if (!process.argv[1]) return false;
+  return import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+}
+
 // === Start Server ===
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+if (isDirectRun()) {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+export default app;

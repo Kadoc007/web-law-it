@@ -1,6 +1,6 @@
 (function () {
   const defaultConfig = {
-    baseUrl: "http://localhost:3000",
+    baseUrl: window.location.origin,
     timeoutMs: 4000
   };
 
@@ -10,8 +10,8 @@
   };
 
   function buildUrl(path, query) {
-    const baseUrl = config.baseUrl.replace(/\/$/, "");
-    const url = new URL(`${baseUrl}${path}`);
+    const baseUrl = config.baseUrl || window.location.origin;
+    const url = new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
 
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -80,6 +80,9 @@
   window.apiClient = {
     request,
     laws: {
+      categories() {
+        return request("/api/laws/config/categories");
+      },
       list(category) {
         return request(`/api/laws/${encodeURIComponent(category)}`);
       },

@@ -4,47 +4,239 @@ let token = "";
 let editId = null;
 let editCardId = null;
 
-const adminImageFallback = "https://via.placeholder.com/80x60?text=No+Image";
+const ui = window.uiUtils;
+const byId = ui.byId;
+const clearElement = ui.clearElement;
+const createMessage = ui.createMessage;
+const adminImageFallback = window.appConstants.images.adminThumbnailFallback;
+const fallbackLawCategories = [
+  {
+    id: "computer",
+    label: "กฎหมายคอมพิวเตอร์",
+    fields: ["section", "title", "description", "penalty"],
+    requiredFields: ["section", "title", "description"],
+    hiddenFields: [],
+  },
+  {
+    id: "privacy",
+    label: "กฎหมายคุ้มครองข้อมูลส่วนบุคคล",
+    fields: ["section", "title", "description", "penalty"],
+    requiredFields: ["section", "title", "description"],
+    hiddenFields: [],
+  },
+  {
+    id: "copyright",
+    label: "กฎหมายเกี่ยวกับการพัฒนาโครงสร้างพื้นฐานสารสนเทศให้ทั่วถึง และเท่าเทียมกัน",
+    fields: ["section", "title", "description", "penalty"],
+    requiredFields: ["section", "title", "description"],
+    hiddenFields: [],
+  },
+  {
+    id: "eft",
+    label: "กฎหมายเกี่ยวกับการโอนเงินทางอิเล็กทรอนิกส์",
+    fields: ["section", "title", "description", "penalty"],
+    requiredFields: ["section", "title", "description"],
+    hiddenFields: [],
+  },
+  {
+    id: "etl",
+    label: "กฎหมายเกี่ยวกับลายมือชื่ออิเล็กทรอนิกส์",
+    fields: ["section", "title", "description", "penalty"],
+    requiredFields: ["section", "title", "description"],
+    hiddenFields: [],
+  },
+  {
+    id: "eta",
+    label: "กฎหมายเกี่ยวกับธุรกรรมทางอิเล็กทรอนิกส์",
+    fields: ["section", "title", "description", "penalty"],
+    requiredFields: ["section", "title", "description"],
+    hiddenFields: [],
+  },
+];
+let lawCategories = [...fallbackLawCategories];
 
-function byId(id) {
-  return document.getElementById(id);
-}
-
-function clearElement(element) {
-  element.replaceChildren();
-}
-
-function createMessage(message) {
-  const paragraph = document.createElement("p");
-  paragraph.style.textAlign = "center";
-  paragraph.style.color = "#888";
-  paragraph.textContent = message;
-  return paragraph;
-}
-
-function setImageWithFallback(img, src, alt, fallbackSrc = adminImageFallback) {
-  img.alt = alt || "";
-  img.src = getSafeImageUrl(src, fallbackSrc);
-  img.addEventListener("error", () => {
-    if (img.src !== fallbackSrc) {
-      img.src = fallbackSrc;
-    }
-  }, { once: true });
-}
-
-function getSafeImageUrl(src, fallbackSrc = adminImageFallback) {
-  if (!src) return fallbackSrc;
-
-  try {
-    const url = new URL(src, window.location.href);
-    if (url.protocol === "http:" || url.protocol === "https:") {
-      return url.href;
-    }
-  } catch (err) {
-    console.warn("Invalid image URL:", err);
+function mergeLawCategoryConfig(categories) {
+  if (!Array.isArray(categories) || categories.length === 0) {
+    return [...fallbackLawCategories];
   }
 
-  return fallbackSrc;
+  const apiById = new Map(categories.map((item) => [item.id, item]));
+  const fallbackIds = new Set(fallbackLawCategories.map((item) => item.id));
+  const mergedKnownCategories = fallbackLawCategories.map((fallbackCategory) => {
+    const apiCategory = apiById.get(fallbackCategory.id) || {};
+
+    return {
+      ...fallbackCategory,
+      ...apiCategory,
+      label: fallbackCategory.label,
+    };
+  });
+
+  const extraApiCategories = categories.filter((item) => !fallbackIds.has(item.id));
+  return [...mergedKnownCategories, ...extraApiCategories];
+}
+
+const lawFieldSpecs = {
+  section: {
+    label: "\u0e21\u0e32\u0e15\u0e23\u0e32",
+    placeholder: "\u0e40\u0e0a\u0e48\u0e19 \u0e21\u0e32\u0e15\u0e23\u0e32 1",
+    control: "input",
+  },
+  title: {
+    label: "\u0e2b\u0e31\u0e27\u0e02\u0e49\u0e2d",
+    placeholder: "\u0e2b\u0e31\u0e27\u0e02\u0e49\u0e2d\u0e01\u0e0e\u0e2b\u0e21\u0e32\u0e22",
+    control: "input",
+  },
+  description: {
+    label: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14",
+    placeholder: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e2b\u0e32\u0e01\u0e0e\u0e2b\u0e21\u0e32\u0e22",
+    control: "textarea",
+    rows: 4,
+  },
+  penalty: {
+    label: "\u0e42\u0e17\u0e29",
+    placeholder: "\u0e42\u0e17\u0e29\u0e2b\u0e23\u0e37\u0e2d\u0e1a\u0e17\u0e25\u0e07\u0e42\u0e17\u0e29 (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
+    control: "input",
+  },
+};
+
+function getLawCategoryConfig(category) {
+  return lawCategories.find((item) => item.id === category) || fallbackLawCategories[0];
+}
+
+function isLawFieldRequired(category, field) {
+  return getLawCategoryConfig(category).requiredFields.includes(field);
+}
+
+function getVisibleLawFields(category) {
+  const config = getLawCategoryConfig(category);
+  return config.fields.filter((field) => !config.hiddenFields.includes(field) && lawFieldSpecs[field]);
+}
+
+function getCurrentLawFormValues() {
+  const values = {};
+
+  Object.keys(lawFieldSpecs).forEach((field) => {
+    values[field] = byId(field)?.value || "";
+  });
+
+  return values;
+}
+
+function renderLawField(field, category, value) {
+  const spec = lawFieldSpecs[field];
+  const isRequired = isLawFieldRequired(category, field);
+  const group = document.createElement("div");
+  group.className = "form-group law-field";
+  group.dataset.lawField = field;
+
+  const label = document.createElement("label");
+  label.htmlFor = field;
+  label.textContent = spec.label;
+
+  if (isRequired) {
+    const requiredMark = document.createElement("span");
+    requiredMark.className = "required";
+    requiredMark.textContent = " *";
+    label.append(requiredMark);
+  } else {
+    const optionalText = document.createElement("span");
+    optionalText.className = "field-hint";
+    optionalText.textContent = " (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)";
+    label.append(optionalText);
+  }
+
+  const control = document.createElement(spec.control === "textarea" ? "textarea" : "input");
+  control.id = field;
+  control.className = "form-control";
+  control.placeholder = spec.placeholder;
+  control.value = value || "";
+
+  if (spec.rows) {
+    control.rows = spec.rows;
+  }
+
+  group.append(label, control);
+  return group;
+}
+
+function renderLawFields(values = getCurrentLawFormValues()) {
+  const fieldsContainer = byId("law-fields");
+  const categorySelect = byId("category");
+  if (!fieldsContainer || !categorySelect) return;
+
+  const category = categorySelect.value || fallbackLawCategories[0].id;
+  clearElement(fieldsContainer);
+
+  getVisibleLawFields(category).forEach((field) => {
+    fieldsContainer.appendChild(renderLawField(field, category, values[field]));
+  });
+}
+
+function buildLawFormData(category) {
+  const data = {};
+  const missingLabels = [];
+
+  getVisibleLawFields(category).forEach((field) => {
+    const input = byId(field);
+    const value = input ? input.value.trim() : "";
+    data[field] = value;
+
+    if (isLawFieldRequired(category, field) && !value) {
+      missingLabels.push(lawFieldSpecs[field].label);
+    }
+  });
+
+  return { data, missingLabels };
+}
+
+function setLawFormValues(law) {
+  getVisibleLawFields(byId("category").value).forEach((field) => {
+    const input = byId(field);
+    if (input) {
+      input.value = law[field] || "";
+    }
+  });
+}
+
+function renderLawCategoryOptions(categories = lawCategories) {
+  const categorySelect = byId("category");
+  if (!categorySelect) return;
+
+  const currentValue = categorySelect.value;
+  categorySelect.replaceChildren();
+
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.textContent = category.label;
+    categorySelect.append(option);
+  });
+
+  if (categories.some((category) => category.id === currentValue)) {
+    categorySelect.value = currentValue;
+  }
+
+  renderLawFields();
+}
+
+async function loadLawCategoryConfig() {
+  if (!window.apiClient || !window.apiClient.laws.categories) {
+    renderLawCategoryOptions();
+    return;
+  }
+
+  try {
+    const categories = await window.apiClient.laws.categories();
+    if (Array.isArray(categories) && categories.length > 0) {
+      lawCategories = mergeLawCategoryConfig(categories);
+    }
+  } catch (err) {
+    console.warn("Using fallback law category config:", err);
+    lawCategories = mergeLawCategoryConfig([]);
+  }
+
+  renderLawCategoryOptions();
 }
 
 async function getAdminToken() {
@@ -69,6 +261,7 @@ async function login() {
     byId("login-box").style.display = "none";
     byId("admin-panel").style.display = "block";
 
+    await loadLawCategoryConfig();
     togglePenalty();
     loadAdminLaws();
     loadAdminCards();
@@ -87,7 +280,7 @@ function logout() {
   editCardId = null;
 
   byId("admin-panel").style.display = "none";
-  byId("login-box").style.display = "block";
+  byId("login-box").style.display = "grid";
   clearElement(byId("admin-laws"));
   clearElement(byId("admin-cards"));
 
@@ -97,15 +290,17 @@ function logout() {
 
 function showTab(tabName) {
   const buttons = document.querySelectorAll(".tab-btn");
-  buttons.forEach((btn, index) => {
-    const isActive = (tabName === "laws" && index === 0) || (tabName === "cards" && index === 1);
+  buttons.forEach((btn) => {
+    const isActive = btn.dataset.adminTab === tabName;
     btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-selected", String(isActive));
   });
 
   document.querySelectorAll(".tab-content").forEach((content) => {
-    content.classList.remove("active");
+    const isActive = content.id === `tab-${tabName}`;
+    content.classList.toggle("active", isActive);
+    content.hidden = !isActive;
   });
-  byId(`tab-${tabName}`).classList.add("active");
 
   if (tabName === "laws") {
     loadAdminLaws();
@@ -115,20 +310,12 @@ function showTab(tabName) {
 }
 
 function togglePenalty() {
-  const category = byId("category").value;
-  const penaltyInput = byId("penalty");
-
-  if (category === "privacy") {
-    penaltyInput.style.display = "none";
-    penaltyInput.value = "";
-  } else {
-    penaltyInput.style.display = "block";
-  }
+  renderLawFields();
 }
 
 function renderLawItem(law) {
   const item = document.createElement("div");
-  item.className = "law-item";
+  item.className = "law-item surface-card interactive-lift d-flex align-items-center justify-content-between gap-3";
 
   const text = document.createElement("div");
   text.className = "law-text";
@@ -138,16 +325,16 @@ function renderLawItem(law) {
   text.append(section, document.createTextNode(` - ${law.title || ""}`));
 
   const actions = document.createElement("div");
-  actions.className = "action-buttons";
+  actions.className = "action-buttons d-flex gap-2";
 
   const editButton = document.createElement("button");
-  editButton.className = "edit-btn";
+  editButton.className = "btn btn-outline-primary btn-sm edit-btn";
   editButton.type = "button";
   editButton.textContent = "แก้ไข";
   editButton.addEventListener("click", () => editLaw(law));
 
   const deleteButton = document.createElement("button");
-  deleteButton.className = "danger";
+  deleteButton.className = "btn btn-danger btn-sm danger";
   deleteButton.type = "button";
   deleteButton.textContent = "ลบ";
   deleteButton.addEventListener("click", () => deleteLaw(law.id));
@@ -164,7 +351,7 @@ async function loadAdminLaws() {
   togglePenalty();
 
   try {
-    const laws = await window.apiClient.laws.list(category);
+    const laws = ui.sortLawsBySection(await window.apiClient.laws.list(category));
     clearElement(container);
 
     if (laws.length === 0) {
@@ -189,14 +376,11 @@ async function saveLaw() {
   }
 
   const category = byId("category").value;
-  const data = {
-    section: byId("section").value,
-    title: byId("title").value,
-    description: byId("description").value
-  };
+  const { data, missingLabels } = buildLawFormData(category);
 
-  if (category !== "privacy") {
-    data.penalty = byId("penalty").value;
+  if (missingLabels.length > 0) {
+    alert(`\u0e01\u0e23\u0e38\u0e13\u0e32\u0e01\u0e23\u0e2d\u0e01 ${missingLabels.join(", ")}`);
+    return;
   }
 
   try {
@@ -220,13 +404,10 @@ async function saveLaw() {
 
 function editLaw(law) {
   editId = law.id;
-  byId("section").value = law.section || "";
-  byId("title").value = law.title || "";
-  byId("description").value = law.description || "";
-  byId("penalty").value = law.penalty || "";
-  byId("saveBtn").innerText = "บันทึกการแก้ไข";
-
-  togglePenalty();
+  renderLawFields();
+  setLawFormValues(law);
+  byId("saveBtn").textContent = "บันทึกการแก้ไข";
+  byId("cancelLawBtn").style.display = "inline-block";
 }
 
 async function deleteLaw(id) {
@@ -248,31 +429,23 @@ async function deleteLaw(id) {
 
 function resetForm() {
   editId = null;
-  byId("section").value = "";
-  byId("title").value = "";
-  byId("description").value = "";
-  byId("penalty").value = "";
-  byId("saveBtn").innerText = "เพิ่มข้อมูล";
-
-  togglePenalty();
-}
-
-function getCategoryLabel(category) {
-  const labels = {
-    help: "ศูนย์ช่วยเหลือ",
-    article: "บทความ",
-    resource: "แหล่งข้อมูล"
-  };
-  return labels[category] || category;
+  renderLawFields({
+    section: "",
+    title: "",
+    description: "",
+    penalty: "",
+  });
+  byId("saveBtn").textContent = "เพิ่มข้อมูล";
+  byId("cancelLawBtn").style.display = "none";
 }
 
 function renderCardItem(card) {
   const item = document.createElement("div");
-  item.className = "card-item";
+  item.className = "card-item surface-card interactive-lift d-flex align-items-center gap-3";
 
   const img = document.createElement("img");
   img.className = "card-item-image";
-  setImageWithFallback(img, card.imageUrl, card.title);
+  ui.setImageWithFallback(img, card.imageUrl, card.title, adminImageFallback);
 
   const info = document.createElement("div");
   info.className = "card-item-info";
@@ -289,22 +462,22 @@ function renderCardItem(card) {
 
   if (card.category) {
     const badge = document.createElement("span");
-    badge.className = "card-item-category";
-    badge.textContent = getCategoryLabel(card.category);
+    badge.className = "badge rounded-pill card-item-category";
+    badge.textContent = ui.getCardCategoryLabel(card.category);
     info.appendChild(badge);
   }
 
   const actions = document.createElement("div");
-  actions.className = "action-buttons";
+  actions.className = "action-buttons d-flex gap-2";
 
   const editButton = document.createElement("button");
-  editButton.className = "edit-btn";
+  editButton.className = "btn btn-outline-primary btn-sm edit-btn";
   editButton.type = "button";
   editButton.textContent = "แก้ไข";
   editButton.addEventListener("click", () => editCard(card.id));
 
   const deleteButton = document.createElement("button");
-  deleteButton.className = "danger";
+  deleteButton.className = "btn btn-danger btn-sm danger";
   deleteButton.type = "button";
   deleteButton.textContent = "ลบ";
   deleteButton.addEventListener("click", () => deleteCard(card.id));
@@ -312,6 +485,88 @@ function renderCardItem(card) {
   actions.append(editButton, deleteButton);
   item.append(img, info, actions);
   return item;
+}
+
+function escapeArticleText(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildArticleTemplate() {
+  const title = byId("card-title")?.value.trim() || "หัวข้อหลัก";
+  const subtitle = byId("card-subtitle")?.value.trim() || "ประเด็นสำคัญ";
+  const description = byId("card-description")?.value.trim() || "เขียนสรุปใจความสำคัญของเนื้อหา";
+
+  return [
+    `<h2>${escapeArticleText(title)}</h2>`,
+    `<p><strong>สรุป:</strong> ${escapeArticleText(description)}</p>`,
+    `<h3>${escapeArticleText(subtitle)}</h3>`,
+    "<p>เขียนรายละเอียดหลักของบทความให้เป็นย่อหน้าสั้น อ่านง่าย และแยกหนึ่งประเด็นต่อหนึ่งย่อหน้า</p>",
+    "<ul>",
+    "  <li><strong>ประเด็นสำคัญ:</strong> อธิบายสิ่งที่ผู้อ่านควรรู้</li>",
+    "  <li><strong>ข้อควรระวัง:</strong> ระบุเงื่อนไขหรือข้อยกเว้นที่สำคัญ</li>",
+    "</ul>",
+  ].join("\n\n");
+}
+
+function insertCardContentSnippet(snippet) {
+  const input = byId("card-pageContent");
+  if (!input) return;
+
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  const before = input.value.slice(0, start);
+  const after = input.value.slice(end);
+  const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
+  const suffix = after && !after.startsWith("\n") ? "\n\n" : "";
+
+  input.value = `${before}${prefix}${snippet}${suffix}${after}`;
+
+  const cursorPosition = before.length + prefix.length + snippet.length;
+  input.focus();
+  input.setSelectionRange(cursorPosition, cursorPosition);
+}
+
+function wrapSelectedCardContent(tagName, fallbackText) {
+  const input = byId("card-pageContent");
+  if (!input) return;
+
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  const selectedText = input.value.slice(start, end);
+
+  if (!selectedText) {
+    insertCardContentSnippet(`<${tagName}>${escapeArticleText(fallbackText)}</${tagName}>`);
+    return;
+  }
+
+  const before = input.value.slice(0, start);
+  const after = input.value.slice(end);
+  const wrapped = `<${tagName}>${escapeArticleText(selectedText.trim())}</${tagName}>`;
+
+  input.value = `${before}${wrapped}${after}`;
+  input.focus();
+  input.setSelectionRange(before.length, before.length + wrapped.length);
+}
+
+function insertArticleTemplate() {
+  insertCardContentSnippet(buildArticleTemplate());
+}
+
+function insertArticleHeading() {
+  wrapSelectedCardContent("h2", "หัวข้อหลัก");
+}
+
+function insertArticleSubheading() {
+  wrapSelectedCardContent("h3", "หัวข้อย่อย");
+}
+
+function insertArticleBold() {
+  wrapSelectedCardContent("strong", "ข้อความที่ต้องการเน้น");
 }
 
 async function loadAdminCards() {
@@ -353,7 +608,6 @@ async function saveCard() {
     subtitle: byId("card-subtitle").value.trim(),
     description: byId("card-description").value.trim(),
     imageUrl: byId("card-imageUrl").value.trim(),
-    slug: byId("card-slug").value.trim(),
     category: byId("card-category").value,
     pageContent: byId("card-pageContent").value
   };
@@ -386,7 +640,6 @@ async function editCard(id) {
     byId("card-subtitle").value = card.subtitle || "";
     byId("card-description").value = card.description || "";
     byId("card-imageUrl").value = card.imageUrl || "";
-    byId("card-slug").value = card.slug || "";
     byId("card-category").value = card.category || "";
     byId("card-pageContent").value = card.pageContent || "";
 
@@ -421,7 +674,6 @@ function resetCardForm() {
   byId("card-subtitle").value = "";
   byId("card-description").value = "";
   byId("card-imageUrl").value = "";
-  byId("card-slug").value = "";
   byId("card-category").value = "";
   byId("card-pageContent").value = "";
 
@@ -437,7 +689,7 @@ function previewImage() {
 
   if (!url) return;
 
-  const safeUrl = getSafeImageUrl(url, "");
+  const safeUrl = ui.getSafeImageUrl(url, "");
   if (!safeUrl) return;
 
   const img = document.createElement("img");
@@ -450,6 +702,82 @@ function previewImage() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  renderLawCategoryOptions();
+
+  const loginButton = byId("loginBtn");
+  if (loginButton) {
+    loginButton.addEventListener("click", login);
+  }
+
+  const passwordInput = byId("password");
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        login();
+      }
+    });
+  }
+
+  const logoutButton = byId("logoutBtn");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", logout);
+  }
+
+  document.querySelectorAll("[data-admin-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      showTab(button.dataset.adminTab);
+    });
+  });
+
+  const categorySelect = byId("category");
+  if (categorySelect) {
+    categorySelect.addEventListener("change", () => {
+      resetForm();
+      loadAdminLaws();
+    });
+  }
+
+  const saveLawButton = byId("saveBtn");
+  if (saveLawButton) {
+    saveLawButton.addEventListener("click", saveLaw);
+  }
+
+  const cancelLawButton = byId("cancelLawBtn");
+  if (cancelLawButton) {
+    cancelLawButton.addEventListener("click", resetForm);
+  }
+
+  const saveCardButton = byId("saveCardBtn");
+  if (saveCardButton) {
+    saveCardButton.addEventListener("click", saveCard);
+  }
+
+  const cancelCardButton = byId("cancelCardBtn");
+  if (cancelCardButton) {
+    cancelCardButton.addEventListener("click", resetCardForm);
+  }
+
+  const articleTemplateButton = byId("insertArticleTemplateBtn");
+  if (articleTemplateButton) {
+    articleTemplateButton.addEventListener("click", insertArticleTemplate);
+  }
+
+  const articleHeadingButton = byId("insertArticleHeadingBtn");
+  if (articleHeadingButton) {
+    articleHeadingButton.addEventListener("click", insertArticleHeading);
+  }
+
+  const articleSubheadingButton = byId("insertArticleSubheadingBtn");
+  if (articleSubheadingButton) {
+    articleSubheadingButton.addEventListener("click", insertArticleSubheading);
+  }
+
+  const articleBoldButton = byId("insertArticleBoldBtn");
+  if (articleBoldButton) {
+    articleBoldButton.addEventListener("click", insertArticleBold);
+  }
+
   const imageInput = byId("card-imageUrl");
   if (imageInput) {
     imageInput.addEventListener("blur", previewImage);
