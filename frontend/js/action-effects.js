@@ -1,13 +1,4 @@
 (function () {
-  const TEXT = {
-    copy: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01",
-    copied: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e41\u0e25\u0e49\u0e27",
-    copiedLink: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e41\u0e25\u0e49\u0e27",
-    copyContact: "Copy contact information",
-    copyLaw: "Copy law summary",
-    copyHeading: "Copy section link"
-  };
-
   const revealSelector = [
     ".banner-slider",
     ".category-card",
@@ -83,51 +74,6 @@
     toastTimer = window.setTimeout(() => {
       toast.classList.remove("show");
     }, 1600);
-  }
-
-  function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text).catch(() => fallbackCopyToClipboard(text));
-    }
-
-    return fallbackCopyToClipboard(text);
-  }
-
-  function fallbackCopyToClipboard(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.top = "-999px";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    textarea.remove();
-    return Promise.resolve();
-  }
-
-  function cleanCopyText(element) {
-    const clone = element.cloneNode(true);
-    clone.querySelectorAll(".contact-copy-btn, .law-copy-btn, .heading-link-btn").forEach((button) => {
-      button.remove();
-    });
-    return clone.textContent.replace(/\s+/g, " ").trim();
-  }
-
-  function setCopiedState(button, message) {
-    if (!button.dataset.originalText) {
-      button.dataset.originalText = button.textContent;
-    }
-
-    button.textContent = TEXT.copied;
-    button.classList.add("is-copied");
-    showToast(message || TEXT.copied);
-
-    window.setTimeout(() => {
-      button.textContent = button.dataset.originalText || TEXT.copy;
-      button.classList.remove("is-copied");
-    }, 1400);
   }
 
   function updateScrollProgress(progressBar) {
@@ -283,112 +229,10 @@
     });
   }
 
-  function decorateConsultContacts(root) {
-    collect(root, ".consult-card .contact").forEach((contact) => {
-      if (contact.dataset.copyReady === "true") return;
-
-      contact.dataset.copyReady = "true";
-      contact.classList.add("has-copy-action");
-
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "contact-copy-btn action-pressable";
-      button.textContent = TEXT.copy;
-      button.setAttribute("aria-label", TEXT.copyContact);
-
-      button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        copyToClipboard(cleanCopyText(contact)).then(() => {
-          setCopiedState(button);
-        });
-      });
-
-      contact.appendChild(button);
-    });
-  }
-
-  function decorateLawCards(root) {
-    collect(root, ".law-card").forEach((card) => {
-      if (card.dataset.copyReady === "true") return;
-
-      card.dataset.copyReady = "true";
-      card.classList.add("has-copy-action");
-
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "law-copy-btn action-pressable";
-      button.textContent = TEXT.copy;
-      button.setAttribute("aria-label", TEXT.copyLaw);
-
-      button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        copyToClipboard(cleanCopyText(card)).then(() => {
-          setCopiedState(button);
-        });
-      });
-
-      card.appendChild(button);
-    });
-  }
-
-  function getHeadingId(heading, index) {
-    if (heading.id) return heading.id;
-
-    const text = heading.textContent.trim() || `section-${index + 1}`;
-    let hash = 0;
-
-    for (let i = 0; i < text.length; i += 1) {
-      hash = ((hash * 31) + text.charCodeAt(i)) >>> 0;
-    }
-
-    return `section-${hash.toString(36)}`;
-  }
-
-  function decorateDetailHeadings(root) {
-    const contentScopes = collect(root, ".card-content");
-
-    if (root.nodeType === Node.ELEMENT_NODE && root.closest) {
-      const parentContent = root.matches(".card-content") ? root : root.closest(".card-content");
-      if (parentContent && !contentScopes.includes(parentContent)) {
-        contentScopes.push(parentContent);
-      }
-    }
-
-    contentScopes.forEach((content) => {
-      content.querySelectorAll("h2, h3").forEach((heading, index) => {
-        if (heading.dataset.linkReady === "true") return;
-
-        heading.dataset.linkReady = "true";
-        heading.id = getHeadingId(heading, index);
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "heading-link-btn action-pressable";
-        button.textContent = "#";
-        button.title = TEXT.copyHeading;
-        button.setAttribute("aria-label", TEXT.copyHeading);
-
-        button.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const url = `${window.location.origin}${window.location.pathname}${window.location.search}#${heading.id}`;
-          copyToClipboard(url).then(() => {
-            setCopiedState(button, TEXT.copiedLink);
-          });
-        });
-
-        heading.appendChild(button);
-      });
-    });
-  }
-
   function refresh(root) {
     const scope = root || document;
     preparePressables(scope);
     prepareReveal(scope);
-    decorateConsultContacts(scope);
-    decorateLawCards(scope);
-    decorateDetailHeadings(scope);
     markCurrentNav();
   }
 
